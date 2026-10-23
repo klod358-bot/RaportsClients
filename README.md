@@ -4,7 +4,7 @@
 
 | Дата | Отчёт |
 | --- | --- |
-| 23.10.2026 | [Изменение заказа клиента без повторного согласования заказ-наряда](reports/2026-10-23-izmenenie-zakaza-klienta/index.html) |
+| 23.10.2026 | [Изменение заказа после согласования: повторное согласование заказ-наряда](reports/2026-10-23-izmenenie-zakaza-klienta/index.html) |
 
 Чтобы страницы открывались по ссылке, включите GitHub Pages: Settings → Pages → Deploy from a branch → `main` / `(root)`.
 После этого сайт будет доступен по адресу https://klod358-bot.github.io/RaportsClients/
