@@ -1191,43 +1191,86 @@ function setFace(R, f) {
   R.brows.forEach((b, i) => { const sd = i ? 1 : -1; b.rotation.z = Math.PI / 2 + sd * tilt; b.position.y = (R.browY || 0.128) + (f === 'open' ? 0.017 : 0); });
 }
 
-const JNT = ['bY', 'bX', 'bZ', 'tX', 'tY', 'tZ', 'hX', 'hY', 'hZ', 'hp0', 'hp1', 'hz0', 'hz1', 'kn0', 'kn1', 'ft0', 'ft1', 'sx0', 'sx1', 'sy0', 'sy1', 'sz0', 'sz1', 'ex0', 'ex1', 'ey0', 'ey1', 'ez0', 'ez1'];
+const JNT = ['bY', 'bX', 'bZ', 'bW', 'tX', 'tY', 'tZ', 'hX', 'hY', 'hZ', 'hp0', 'hp1', 'hz0', 'hz1', 'kn0', 'kn1', 'ft0', 'ft1', 'sx0', 'sx1', 'sy0', 'sy1', 'sz0', 'sz1', 'ex0', 'ex1', 'ey0', 'ey1', 'ez0', 'ez1'];
 function poseBase() { const p = {}; for (const j of JNT) p[j] = 0; p.bY = 0.8; p.sz0 = -0.13; p.sz1 = 0.13; p.ex0 = -0.2; p.ex1 = -0.2; return p; }
 const SDS = [-1, 1];
+
+/* periodic Catmull-Rom through hand-placed key poses: [[u, value], ...] with u in 0..1 */
+function loopCurve(keys) {
+  const n = keys.length;
+  return (u) => {
+    u -= Math.floor(u);
+    let i = n - 1; for (let k = 0; k < n; k++) { if (keys[k][0] > u) { i = k - 1; break; } }
+    if (i < 0) i = n - 1;
+    const k1 = keys[i], k2 = keys[(i + 1) % n], k0 = keys[(i - 1 + n) % n], k3 = keys[(i + 2) % n];
+    let span = k2[0] - k1[0]; if (span <= 0) span += 1; let du = u - k1[0]; if (du < 0) du += 1;
+    const t = clamp(du / span, 0, 1), t2 = t * t, t3 = t2 * t;
+    const p0 = k0[1], p1 = k1[1], p2 = k2[1], p3 = k3[1];
+    return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+  };
+}
+/* one stride of one leg; u = 0 is heel strike with this leg in front */
+const RUN = {
+  hip: loopCurve([[0, -0.78], [0.12, -0.42], [0.3, 0.2], [0.42, 0.58], [0.56, 0.5], [0.72, -0.28], [0.88, -0.95]]),
+  knee: loopCurve([[0, 0.22], [0.12, 0.66], [0.3, 0.3], [0.42, 0.32], [0.56, 1.5], [0.72, 1.95], [0.88, 0.85]]),
+  foot: loopCurve([[0, -0.22], [0.12, 0.04], [0.3, 0.12], [0.42, 0.62], [0.56, 0.42], [0.72, 0.16], [0.88, -0.1]]),
+  bob: loopCurve([[0, 0.35], [0.12, 0], [0.3, 0.38], [0.5, 0.86], [0.7, 1], [0.88, 0.7]]),
+};
+const lerpPose = (A, B, k) => { const o = {}; for (const j in A) o[j] = A[j] + (B[j] - A[j]) * k; return o; };
+const AIR_RISE = { hp0: -1.15, kn0: 1.75, ft0: 0.35, hp1: -0.05, kn1: 0.55, ft1: 0.4, sz: 2.25, sx: -0.35, ex: -0.35, tX: 0.0, hX: -0.22 };
+const AIR_TUCK = { hp0: -1.3, kn0: 2.0, ft0: 0.3, hp1: -0.9, kn1: 1.8, ft1: 0.3, sz: 1.7, sx: -0.45, ex: -0.95, tX: 0.25, hX: -0.05 };
+const AIR_DROP = { hp0: -0.55, kn0: 0.55, ft0: -0.15, hp1: -0.22, kn1: 0.3, ft1: -0.1, sz: 1.3, sx: -0.1, ex: -0.4, tX: 0.12, hX: 0.05 };
+
+/* small one-shot nudges from the game: squash/stretch, crouch, a skip, a mood */
+function charImpulse(R, sq, dip, hop) { R.sqV = (R.sqV || 0) + (sq || 0); R.dipV = (R.dipV || 0) + (dip || 0); if (hop && !(R.hopY > 0.01)) R.hopVy = hop; }
+function charEmote(R, face, dur, look) { R.moodF = face; R.moodT = dur; if (look) { R.lookTo = look; R.lookT = dur; } }
+
 function charPose(R, st, dt, o = {}) {
-  const T = poseBase(), t = o.t || 0; let k = 16;
+  const T = poseBase(), t = o.t || 0; let k = 16; let danceY = 0, extraYaw = 0; const lean = o.lean || 0;
+  R.winT = st === 'win' ? (R.winT || 0) + dt : 0;
+  const g = o.gesture, gp = o.gp || 0;
   switch (st) {
     case 'idle': case 'akimbo': case 'wave': case 'spread': {
       const b = Math.sin(t * 2.1); T.bY = 0.8 + b * 0.006; T.tX = 0.02 + b * 0.012; T.hY = Math.sin(t * 0.6) * 0.28; T.hX = Math.sin(t * 0.83) * 0.05 - 0.03; T.hZ = Math.sin(t * 0.5) * 0.04;
+      T.hp0 = T.hp1 = -0.02; T.kn0 = T.kn1 = 0.05 + (b + 1) * 0.02;
       for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (0.14 + b * 0.02); T['ex' + i] = -0.25; }
       if (st === 'akimbo') for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * 0.8; T['sx' + i] = -0.05; T['ez' + i] = -SDS[i] * 1.55; T['ex' + i] = -0.3; }
       if (st === 'spread') for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (0.78 + b * 0.05); T['ex' + i] = -0.12; T['sx' + i] = -0.12; }
       if (st === 'wave') { T.sz1 = 2.45; T.sx1 = -0.25; T.ez1 = -0.45 + Math.sin(t * 7) * 0.4; T.ex1 = -0.15; T.sz0 = -0.3; T.ex0 = -0.45; T.hZ = 0.1; T.hY *= 0.4; }
+      if (g) { k = 14; ({ danceY, extraYaw } = gesturePose(R, T, g, gp, t)); }
       break;
     }
     case 'run': {
-      const ph = R.phase; k = 32;
+      k = 30; const u = R.phase / TAU, amp = clamp((o.speed || 14) / 14, 0.85, 1.2);
       for (let i = 0; i < 2; i++) {
-        const p = ph + i * Math.PI, s = Math.sin(p), c = Math.cos(p);
-        T['hp' + i] = -0.85 * s - 0.12; T['kn' + i] = 0.35 + 1.35 * Math.max(0, c); T['ft' + i] = 0.25 * Math.max(0, -c) - 0.15 * s;
-        T['sx' + i] = 0.8 * s; T['ex' + i] = -1.35; T['sz' + i] = SDS[i] * 0.16;
+        const ui = u + i * 0.5;
+        T['hp' + i] = RUN.hip(ui) * amp - 0.06; T['kn' + i] = RUN.knee(ui) * (0.85 + 0.15 * amp); T['ft' + i] = RUN.foot(ui);
+        const arm = Math.cos(TAU * (ui - 0.04));
+        T['sx' + i] = 0.88 * arm * amp; T['ex' + i] = -1.2 - 0.4 * Math.max(0, -arm); T['sz' + i] = SDS[i] * (0.17 + 0.05 * Math.max(0, arm)); T['ez' + i] = SDS[i] * 0.1;
       }
-      T.bY = 0.77 + Math.abs(Math.cos(ph)) * 0.07; T.tX = 0.22; T.tY = Math.sin(ph) * 0.16; T.hY = -Math.sin(ph) * 0.1; T.hX = -0.12;
-      T.bZ = (o.lean || 0) * 0.22; T.tZ = (o.lean || 0) * 0.08; break;
+      const bob = RUN.bob(u * 2), sw = Math.sin(TAU * u);
+      T.bY = 0.735 + bob * 0.085; T.tX = 0.22 + 0.05 * amp - bob * 0.03; T.tY = sw * 0.17; T.bW = -sw * 0.12; T.tZ = Math.sin(TAU * u * 2) * 0.025;
+      T.hY = -sw * 0.12; T.hX = -0.14 + bob * 0.05;
+      T.bZ = lean * 0.2; T.bW += -lean * 0.32; T.tZ += lean * 0.08; T.hZ = -lean * 0.12; T.hY += -lean * 0.22;
+      break;
     }
-    case 'jump': {
-      k = 14; T.hp0 = -1.05; T.kn0 = 1.7; T.hp1 = -0.25; T.kn1 = 0.7; T.ft0 = 0.3;
-      for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * 2.2; T['ex' + i] = -0.5; T['sx' + i] = -0.2; }
-      T.tX = 0.08; T.hX = -0.15; T.bZ = (o.lean || 0) * 0.2; break;
+    case 'air': {
+      k = 18; const a = clamp((o.vy || 0) / PHYS.JUMP, -1, 1);
+      const P = a > 0 ? lerpPose(AIR_TUCK, AIR_RISE, Math.min(1, a * 1.3)) : lerpPose(AIR_TUCK, AIR_DROP, Math.min(1, -a * 1.4));
+      T.hp0 = P.hp0; T.kn0 = P.kn0; T.ft0 = P.ft0; T.hp1 = P.hp1; T.kn1 = P.kn1; T.ft1 = P.ft1; T.tX = P.tX; T.hX = P.hX;
+      const fl = a < 0 ? Math.sin(t * 14) * 0.12 * -a : 0;
+      for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (P.sz + fl * SDS[i]); T['sx' + i] = P.sx; T['ex' + i] = P.ex; }
+      T.bZ = lean * 0.2; T.bW = -lean * 0.25; T.hZ = -lean * 0.1; break;
     }
     case 'fall': {
-      k = 10; const f = Math.sin(t * 18); T.hp0 = -0.55; T.kn0 = 0.5; T.hp1 = -0.1; T.kn1 = 0.9;
-      for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (1.7 + f * SDS[i] * 0.25); T['ex' + i] = -0.3; }
-      T.hX = 0.1; T.bZ = (o.lean || 0) * 0.2; break;
+      k = 10; const f = Math.sin(t * 18); T.hp0 = -0.55 + Math.sin(t * 11) * 0.3; T.kn0 = 0.5; T.hp1 = -0.1 - Math.sin(t * 11) * 0.3; T.kn1 = 0.9;
+      for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (1.7 + f * SDS[i] * 0.35); T['ex' + i] = -0.3; }
+      T.hX = 0.1; T.bZ = lean * 0.2; break;
     }
     case 'slide': {
       k = 22; T.bY = 0.44; T.bX = -1.0; T.hp0 = 0.12; T.kn0 = 0.1; T.hp1 = 0.55; T.kn1 = 1.6; T.ft0 = -0.3; T.tX = 0.05; T.hX = 0.72;
-      T.sx0 = -1.9; T.sz0 = -0.5; T.ex0 = -0.3; T.sx1 = 0.6; T.sz1 = 0.6; T.ex1 = -0.5; break;
+      T.sx0 = -1.9; T.sz0 = -0.5; T.ex0 = -0.3; T.sx1 = 0.6; T.sz1 = 0.6; T.ex1 = -0.5; T.bZ = lean * 0.15; T.bW = -lean * 0.2;
+      const jit = Math.sin(t * 40) * 0.01; T.bY += jit; break;
     }
     case 'spin': {
       k = 24; for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * 1.5; T['ex' + i] = -0.15; T['hz' + i] = SDS[i] * 0.22; T['kn' + i] = 0.3; }
@@ -1235,54 +1278,149 @@ function charPose(R, st, dt, o = {}) {
     }
     case 'hit': {
       k = 18; T.tX = -0.45; T.hX = -0.35; for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * 1.25; T['ex' + i] = -0.7; T['sx' + i] = -0.5; }
-      T.hp0 = -0.4; T.kn0 = 0.8; T.bY = 0.76; break;
+      T.hp0 = -0.4; T.kn0 = 0.8; T.bY = 0.76; T.hZ = Math.sin(t * 30) * 0.12; break;
     }
-    case 'win': {
-      k = 14; const w = Math.sin(t * 9);
-      for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (2.55 + w * 0.18 * SDS[i]); T['ez' + i] = -SDS[i] * 0.35; T['ex' + i] = -0.2; }
-      T.hp0 = -0.3 - 0.35 * Math.max(0, w); T.kn0 = 0.6 + 0.4 * Math.max(0, w); T.hX = -0.14; T.tX = -0.06; break;
-    }
+    case 'win': { k = 14; ({ danceY, extraYaw } = winDance(R, T, R.winT)); break; }
     case 'ready': {
-      k = 10; const b = Math.sin(t * 4); T.bY = 0.72 + b * 0.01; T.tX = 0.32; T.hX = -0.25;
+      k = 10; const b = Math.sin(t * 6); T.bY = 0.72 + b * 0.012; T.tX = 0.32; T.hX = -0.25;
       for (let i = 0; i < 2; i++) { T['hp' + i] = -0.35; T['kn' + i] = 0.75; T['ft' + i] = -0.35; T['sx' + i] = -0.25; T['ex' + i] = -1.5; T['sz' + i] = SDS[i] * 0.25; }
       T.hp1 = 0.12; T.kn1 = 0.42; break;
     }
     case 'sad': {
-      k = 6; T.tX = 0.35; T.hX = 0.38; for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * 0.08; T['ex' + i] = -0.1; } T.bY = 0.78; break;
+      k = 6; T.tX = 0.35; T.hX = 0.38; T.hY = Math.sin(t * 2.2) * 0.12; for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * 0.08; T['ex' + i] = -0.1; } T.bY = 0.78; T.kn0 = T.kn1 = 0.12; break;
     }
   }
+  /* head turns toward something that just whizzed past */
+  if (R.lookT > 0) { R.lookT -= dt; } R.look = damp(R.look || 0, R.lookT > 0 ? R.lookTo : 0, 9, dt); T.hY += R.look;
+
   const kk = 1 - Math.exp(-dt * k);
   if (!R.C) R.C = Object.assign({}, T);
   const C = R.C; for (const j of JNT) C[j] += (T[j] - C[j]) * kk;
-  R.body.position.y = C.bY; R.body.rotation.set(C.bX, 0, C.bZ);
+
+  /* springs: squash & stretch, landing crouch, lane-change skip */
+  const sqRest = st === 'air' ? clamp((o.vy || 0) * 0.009, -0.07, 0.1) : 0;
+  R.sq = R.sq || 0; R.sqV = R.sqV || 0; R.sqV += ((sqRest - R.sq) * 170 - R.sqV * 11) * dt; R.sq = clamp(R.sq + R.sqV * dt, -0.22, 0.22);
+  R.dip = R.dip || 0; R.dipV = R.dipV || 0; R.dipV += (-R.dip * 200 - R.dipV * 14) * dt; R.dip = clamp(R.dip + R.dipV * dt, -0.2, 0.1);
+  R.hopY = R.hopY || 0; if (R.hopVy || R.hopY > 0) { R.hopVy = (R.hopVy || 0) - 32 * dt; R.hopY += R.hopVy * dt; if (R.hopY <= 0) { R.hopY = 0; R.hopVy = 0; } }
+  if (!R.baseScale) R.baseScale = R.inner.scale.x; const bs = R.baseScale;
+  R.inner.scale.set(bs * (1 - R.sq * 0.45), bs * (1 + R.sq), bs * (1 - R.sq * 0.45));
+
+  R.body.position.y = C.bY + R.dip + R.hopY + danceY; R.body.rotation.set(C.bX, C.bW, C.bZ);
   R.torso.rotation.set(C.tX, C.tY, C.tZ); R.head.rotation.set(C.hX, C.hY, C.hZ);
   for (let i = 0; i < 2; i++) {
     const l = R.legs[i], a = R.arms[i];
     l.hip.rotation.set(C['hp' + i], 0, C['hz' + i]); l.knee.rotation.x = C['kn' + i]; l.foot.rotation.x = C['ft' + i];
     a.sh.rotation.set(C['sx' + i], C['sy' + i], C['sz' + i]); a.el.rotation.set(C['ex' + i], C['ey' + i], C['ez' + i]);
   }
-  /* secondary motion */
-  R.blinkT -= dt; let bl = 1; if (R.blinkT < 0) { bl = 0.1; if (R.blinkT < -0.12) R.blinkT = 2 + Math.random() * 3; }
+  if (!extraYaw) { let e = ((R.extraYaw || 0) % TAU + TAU) % TAU; if (e > Math.PI) e -= TAU; R.extraYaw = e; }
+  R.extraYaw = damp(R.extraYaw || 0, extraYaw, extraYaw ? 40 : 10, dt);
+  R.inner.rotation.y = (R.spin || 0) + R.extraYaw;
+
+  /* secondary motion driven by how fast the head moved up or down this frame */
+  const hy = R.root.position.y + R.body.position.y;
+  const vel = R.pHY === undefined ? 0 : (hy - R.pHY) / Math.max(dt, 1e-3); R.pHY = hy;
+  const dv = clamp(vel - (R.pHV || 0), -14, 14); R.pHV = vel;
+  R.blinkT -= dt; let bl = 1; if (R.blinkT < 0) { bl = 0.1; if (R.blinkT < -0.12) R.blinkT = Math.random() < 0.2 ? 0.18 : 2 + Math.random() * 3; }
   const sq = Math.min(R.faceSq, bl); R.eyes[0].scale.y = sq; R.eyes[1].scale.y = sq;
+  R.hx = R.hx || 0; R.hv = (R.hv || 0) - dv * 0.05; R.hv += (-R.hx * 150 - R.hv * 9) * dt; R.hx = clamp(R.hx + R.hv * dt, -0.05, 0.05);
+  R.hair.position.y = R.hairBase + R.hx * 0.45; R.hair.rotation.x = -R.hx * 1.6;
   const run = st === 'run' ? 1 : 0;
-  R.hair.position.y = R.hairBase + Math.sin(R.phase * 2 + 0.9) * 0.012 * run + (st === 'jump' ? -0.01 : st === 'fall' ? 0.015 : 0);
   if (R.tail) {
-    const target = 0.25 + run * 0.45 - (o.vy || 0) * 0.025 + (st === 'slide' ? 0.6 : 0);
-    R.tailV += ((target - R.tailA) * 55 - R.tailV * 6) * dt; R.tailA += R.tailV * dt; R.tail.rotation.x = clamp(R.tailA + Math.sin(R.phase * 2) * 0.08 * run, -0.4, 1.5);
-    R.tailZV += ((-(o.lean || 0) * 0.6 - R.tailZ) * 45 - R.tailZV * 5) * dt; R.tailZ += R.tailZV * dt; R.tail.rotation.z = R.tailZ;
+    const target = 0.25 + run * 0.45 - (o.vy || 0) * 0.02 + (st === 'slide' ? 0.6 : 0) + (st === 'win' ? 0.3 : 0);
+    R.tailV += -dv * 0.9; R.tailV += ((target - R.tailA) * 55 - R.tailV * 6) * dt; R.tailA += R.tailV * dt; R.tail.rotation.x = clamp(R.tailA + Math.sin(R.phase * 2) * 0.08 * run, -0.5, 1.6);
+    let dy = R.extraYaw - (R.pYaw || 0); if (dy > Math.PI) dy -= TAU; if (dy < -Math.PI) dy += TAU; R.tailZV += -dy * 2.5; R.pYaw = R.extraYaw;
+    R.tailZV += ((-lean * 0.6 - R.tailZ) * 45 - R.tailZV * 5) * dt; R.tailZ = clamp(R.tailZ + R.tailZV * dt, -1, 1); R.tail.rotation.z = R.tailZ;
   }
   if (R.ears) {
     R.earT -= dt; if (R.earT < 0) { R.earT = 1.5 + Math.random() * 3; R.earTw = 0.3; }
     let tw = 0; if (R.earTw > 0) { R.earTw -= dt; tw = Math.sin(R.earTw * 42) * 0.18; }
-    R.ears[0].rotation.x = tw; R.ears[1].rotation.x = -tw * 0.6;
+    R.ev = (R.ev || 0) - dv * 0.6; R.ex = R.ex || 0; R.ev += (-R.ex * 170 - R.ev * 8) * dt; R.ex = clamp(R.ex + R.ev * dt, -0.5, 0.5);
+    R.ears[0].rotation.x = tw + R.ex; R.ears[1].rotation.x = -tw * 0.6 + R.ex;
   }
   if (R.wings) {
-    const air = st === 'jump' || st === 'fall'; const sp = air ? 22 : st === 'win' ? 13 : st === 'run' ? 9 : 3.2;
-    const amp = air ? 0.6 : st === 'win' ? 0.45 : st === 'run' ? 0.14 : 0.12; R.wingT = (R.wingT || 0) + dt * sp; const f = Math.sin(R.wingT) * amp;
+    const air = st === 'air' || st === 'fall'; const dance = st === 'win' || (g && (g === 'prance' || g === 'hop'));
+    const sp = air ? 22 : dance ? 16 : run ? 9 : 3.2; const amp = air ? 0.6 : dance ? 0.5 : run ? 0.14 : 0.12;
+    R.wingT = (R.wingT || 0) + dt * sp; R.wk = (R.wk || 0) * Math.exp(-dt * 6) - dv * 0.03;
+    const f = Math.sin(R.wingT) * amp + R.wk;
     for (const w of R.wings) { w.g.rotation.z = w.sd * (f + (air ? 0.25 : 0)); w.g.rotation.y = damp(w.g.rotation.y, -w.sd * (st === 'slide' ? 1.0 : air ? 0.2 : 0.35), 10, dt); }
-    if (R.hornTip) R.hornTip.material.opacity = 0.65 + Math.sin((o.t || 0) * 3.3) * 0.35;
+    if (R.hornTip) { const glow = st === 'win' ? 1.6 : 1; R.hornTip.material.opacity = 0.65 + Math.sin(t * 3.3) * 0.35; R.hornTip.scale.setScalar(0.32 * glow * (1 + Math.sin(t * 7) * 0.1 * (glow - 1))); }
   }
 }
+
+/* menu gestures: gp runs 0..1 over the gesture */
+function gesturePose(R, T, g, gp, t) {
+  let danceY = 0, extraYaw = 0;
+  const arc = (a, b) => { const q = clamp((gp - a) / (b - a), 0, 1); return Math.sin(q * Math.PI); };
+  if (g === 'hop') {
+    const crouch = arc(0, 0.28) * (gp < 0.28 ? 1 : 0) + arc(0.72, 1) * (gp > 0.72 ? 1 : 0);
+    danceY = arc(0.22, 0.78) * 0.42 - crouch * 0.1;
+    const air = arc(0.22, 0.78);
+    for (let i = 0; i < 2; i++) { T['hp' + i] = -0.3 * crouch - 0.5 * air; T['kn' + i] = 0.7 * crouch + 1.0 * air; T['ft' + i] = 0.3 * air; T['sz' + i] = SDS[i] * (0.2 + 2.1 * air); T['ex' + i] = -0.3; }
+    T.tX = 0.2 * crouch;
+  } else if (g === 'look') {
+    const look = Math.sin(clamp(gp * 1.15, 0, 1) * Math.PI);
+    T.sx0 = -0.75; T.sz0 = -1.5; T.ex0 = -2.1 - 0.3 * Math.max(0, Math.sin(gp * TAU * 3)) * look; T.ez0 = 0.15; T.sz1 = 0.8; T.ez1 = -1.55; T.ex1 = -0.3;
+    T.hY = -0.6 * look; T.hX = 0.06 * look; T.hZ = -0.08 * look; T.tY = -0.12 * look;
+  } else if (g === 'twirl') {
+    extraYaw = smoothstep(0.08, 0.85, gp) * TAU;
+    danceY = arc(0.05, 0.9) * 0.08;
+    for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * 1.45; T['ex' + i] = -0.15; T['sx' + i] = -0.1; }
+    T.hp1 = -0.35; T.kn1 = 1.1; T.hZ = 0.15;
+  } else if (g === 'prance') {
+    const hopN = Math.floor(gp * 4), q = gp * 4 - hopN;
+    danceY = Math.sin(q * Math.PI) * 0.22;
+    const lead = hopN % 2;
+    T['hp' + lead] = -1.15 * Math.sin(q * Math.PI); T['kn' + lead] = 1.6 * Math.sin(q * Math.PI);
+    for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (1.6 + Math.sin(gp * TAU * 4 + i) * 0.25); T['ex' + i] = -0.4; T['sx' + i] = -0.3; }
+    T.hX = -0.1 + Math.sin(q * Math.PI) * 0.1; T.tZ = (lead ? 1 : -1) * 0.06;
+  } else if (g === 'cheer') {
+    const sh = Math.sin(gp * TAU * 5) * 0.2;
+    for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (2.5 + sh * SDS[i]); T['ex' + i] = -0.25; T['ez' + i] = -SDS[i] * 0.3; }
+    danceY = Math.abs(Math.sin(gp * TAU * 2.5)) * 0.07; T.hX = -0.15;
+  }
+  return { danceY, extraYaw };
+}
+
+/* each hero has their own victory dance */
+function winDance(R, T, w) {
+  let danceY = 0, extraYaw = 0;
+  if (R.kind === 'boy') {
+    const p = w % 2.0;
+    if (p < 1.0) {
+      const beat = Math.max(0, Math.sin(p * TAU * 2.5));
+      T.sz0 = -2.55; T.sx0 = -0.2; T.ex0 = -0.2 - 1.0 * beat; T.ez0 = 0.25;
+      T.sz1 = 0.8; T.ez1 = -1.55; T.ex1 = -0.3;
+      danceY = -0.04 * beat; T.hp0 = T.hp1 = -0.1; T.kn0 = T.kn1 = 0.25 + 0.2 * beat; T.hX = -0.18; T.hZ = 0.08;
+    } else {
+      const q = p - 1.0; const air = Math.sin(clamp(q / 0.8, 0, 1) * Math.PI);
+      danceY = air * 0.6; extraYaw = smoothstep(0.05, 0.75, q) * TAU;
+      for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * 2.5; T['ex' + i] = -0.2; T['hp' + i] = -0.85 * air; T['kn' + i] = 1.4 * air; }
+      T.hX = -0.2;
+    }
+  } else if (R.kind === 'girl') {
+    const p = w % 2.4;
+    if (p < 1.2) {
+      const q = p / 1.2; extraYaw = smoothstep(0.05, 0.85, q) * TAU; danceY = Math.sin(q * Math.PI) * 0.12;
+      for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * 1.5; T['ex' + i] = -0.12; T['sx' + i] = -0.1; }
+      T.hp1 = -0.4; T.kn1 = 1.2; T.hZ = 0.18;
+    } else {
+      const q = p - 1.2;
+      T.sz0 = -2.45; T.sx0 = -0.25; T.ez0 = 0.45 - Math.sin(q * 9) * 0.4; T.ex0 = -0.15;
+      T.sz1 = 0.8; T.ez1 = -1.55; T.ex1 = -0.3;
+      danceY = Math.abs(Math.sin(q * TAU * 1.7)) * 0.14; T.hZ = Math.sin(q * TAU * 0.85) * 0.18; T.bZ = Math.sin(q * TAU * 0.85) * 0.08;
+      T.kn0 = T.kn1 = 0.2;
+    }
+  } else {
+    const hopN = Math.floor(w / 0.42), q = (w / 0.42) - hopN; const lead = hopN % 2;
+    danceY = Math.sin(q * Math.PI) * 0.3;
+    T['hp' + lead] = -1.2 * Math.sin(q * Math.PI); T['kn' + lead] = 1.7 * Math.sin(q * Math.PI); T['hp' + (1 - lead)] = 0.1;
+    for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (2.0 + Math.sin(w * 9 + i * Math.PI) * 0.35); T['ex' + i] = -0.35; T['sx' + i] = -0.25; }
+    T.hX = -0.18 + Math.sin(q * Math.PI) * 0.12; T.tZ = (lead ? 1 : -1) * 0.08; T.hZ = (lead ? -1 : 1) * 0.1;
+    if (w % 3.36 > 2.52) extraYaw = smoothstep(2.52, 3.3, w % 3.36) * TAU;
+  }
+  return { danceY, extraYaw };
+}
+
 function tintChar(R, color, amt) { for (const m of R.mats) { if (!m.emissive) continue; m.emissive.copy(color); m.emissiveIntensity = amt; } }
 
 /* ================= the unicorn hero: same rig and proportions as the kids, pony features on top ================= */
@@ -2132,7 +2270,7 @@ function buildLevelScene(n) {
   cm.instanceMatrix.setUsage(THREE.DynamicDrawUsage); group.add(cm);
   Game.lv = lv; Game.group = group; Game.res = res; Game.coinMesh = cm; Game.n = n;
   applyWorldLook(W);
-  const R = getHero(Save.data.char); scene.add(R.root); Game.R = R; R.C = null; R.inner.rotation.y = 0; tintChar(R, new THREE.Color(0), 0);
+  const R = getHero(Save.data.char); scene.add(R.root); Game.R = R; R.C = null; R.inner.rotation.y = 0; Object.assign(R, { sq: 0, sqV: 0, dip: 0, dipV: 0, hopY: 0, hopVy: 0, moodT: 0, lookT: 0, look: 0, extraYaw: 0, spin: 0, pHY: undefined, pHV: 0, winT: 0 }); tintChar(R, new THREE.Color(0), 0);
   Game.P = newPlayer(); Game.P.speed = 0;
   Game.hearts = 3; Game.lastCP = null; Game.lo = 0; Game.lo2 = 0; Game.cLo = 0; Game.t = 0; Game.hi = 0; Game.winShown = false; Game.overShown = false; Game.result = null;
   Game.stats = { coins: 0, score: 0, hits: 0, gems: 0, gemCount: 0, crates: 0, time: 0 };
@@ -2160,25 +2298,26 @@ function act(a) {
   if (Game.state !== 'play') { if (a === 'pause' && (Game.state === 'paused')) resume(); return; }
   const P = Game.P;
   switch (a) {
-    case 'left': if (P.lane > 0) { P.lane--; Sound.fx('lane'); } else Cam.shake = Math.max(Cam.shake, 0.08); break;
-    case 'right': if (P.lane < 2) { P.lane++; Sound.fx('lane'); } else Cam.shake = Math.max(Cam.shake, 0.08); break;
+    case 'left': if (P.lane > 0) { P.lane--; Sound.fx('lane'); laneSkip(); } else Cam.shake = Math.max(Cam.shake, 0.08); break;
+    case 'right': if (P.lane < 2) { P.lane++; Sound.fx('lane'); laneSkip(); } else Cam.shake = Math.max(Cam.shake, 0.08); break;
     case 'jump': doJump(); break;
     case 'slide': doSlide(); break;
     case 'attack': doAttack(); break;
     case 'pause': pause(); break;
   }
 }
+function laneSkip() { const P = Game.P; if (Game.R && P.grounded && P.slideT <= 0) charImpulse(Game.R, 0.6, 0, 3.2); }
 function doJump() {
   const P = Game.P;
   if (P.grounded || P.coyote > 0) {
     P.vy = PHYS.JUMP; P.grounded = false; P.coyote = 0; P.onObj = null; P.slideT = 0; P.slideQ = false; P.airT = 0; P.jumpBuf = 0;
-    Sound.fx('jump'); dustAt(P, 5); return true;
+    Sound.fx('jump'); dustAt(P, 5); if (Game.R) { Game.R.sq = -0.08; charImpulse(Game.R, 3.2, -0.2); Game.R.hopY = 0; Game.R.hopVy = 0; } return true;
   }
   P.jumpBuf = 0.15; return false;
 }
 function doSlide() {
   const P = Game.P;
-  if (P.grounded) { if (P.slideT <= 0) Sound.fx('slide'); P.slideT = 0.7; }
+  if (P.grounded) { if (P.slideT <= 0) { Sound.fx('slide'); if (Game.R) charImpulse(Game.R, -1.4, -1.0); } P.slideT = 0.7; }
   else { P.vy = Math.min(P.vy, -20); P.slideQ = true; }
 }
 function doAttack() {
@@ -2214,6 +2353,7 @@ function physicsStep(dt) {
   if (P.y < -3.2) { startFall(); return; }
   P.inSlow = false;
   checkContacts();
+  nearMissScan();
   if (P.attackT > 0) attackSweep();
 }
 function resolveSupport() {
@@ -2242,7 +2382,8 @@ function resolveCeiling() {
 }
 function onLand(o) {
   const P = Game.P; const air = P.airT; P.airT = 0;
-  if (o && o.type === 'crate') { breakObj(o, 'stomp'); P.vy = 10.5; P.grounded = false; P.onObj = null; Cam.shake = Math.max(Cam.shake, 0.15); return; }
+  if (o && o.type === 'crate') { breakObj(o, 'stomp'); P.vy = 10.5; P.grounded = false; P.onObj = null; Cam.shake = Math.max(Cam.shake, 0.15); if (Game.R) { Game.R.sq = -0.12; charImpulse(Game.R, 3.5, 0); charEmote(Game.R, 'happy', 0.45); } return; }
+  if (Game.R) { const imp = clamp(air / 0.7, 0.25, 1); charImpulse(Game.R, -3.6 * imp, -1.7 * imp); }
   if (P.slideQ) { P.slideQ = false; P.slideT = 0.7; Sound.fx('slide'); }
   if (P.jumpBuf > 0) { doJump(); return; }
   if (air > 0.22) { Sound.fx('land'); dustAt(P, 8); Cam.bump = 0.1; }
@@ -2257,6 +2398,20 @@ function checkContacts() {
   };
   forNear(test);
   for (const o of Game.lv.movers) if (Math.abs(o.s - P.s) < 4) test(o);
+}
+/* glance at hazards that just whooshed past, smile after clearing one */
+function nearMissScan() {
+  const P = Game.P, R = Game.R; if (!R || P.invuln > 0) return;
+  const test = (o) => {
+    if (o.nm || o.broken || o.kind !== 'hazard') return;
+    const passed = o.type === 'roller' ? (o.active && o.s < P.s - 0.3) : (P.s > o.sMax + PD + 0.1);
+    if (!passed) return; o.nm = true;
+    const dx = o.x - P.x, gap = Math.abs(dx) - (o.hw + PW);
+    if (o.y1 <= 0.3) return;
+    if (gap >= 0 && gap < 1.6) charEmote(R, 'open', 0.55, -Math.sign(dx) * 0.7);
+    else if (gap < 0 && (P.y > o.y1 - 0.05 || (o.type === 'bar' && P.slideT > 0))) charEmote(R, 'happy', 0.45);
+  };
+  forNear(test); for (const o of Game.lv.movers) if (Math.abs(o.s - P.s) < 3) test(o);
 }
 function spinnerHit(o, P) {
   const dx = P.x - o.x, ds = P.s - o.s; if (Math.abs(ds) > 4.9) return false;
@@ -2286,7 +2441,7 @@ function attackSweep() {
 function trigger(o) {
   const P = Game.P;
   if (o.type === 'spring') {
-    if (P.vy <= 0 && P.y < 0.35) { P.vy = PHYS.SPRING; P.grounded = false; P.onObj = null; P.slideT = 0; P.airT = 0; Sound.fx('spring'); o.squash = 1; FX.burst('spark', objPos(o, 0.6), 10, { color: 0xffffff, speed: 3, up: 4, size: 0.1, life: 0.5, grav: 6 }); }
+    if (P.vy <= 0 && P.y < 0.35) { P.vy = PHYS.SPRING; P.grounded = false; P.onObj = null; P.slideT = 0; P.airT = 0; Sound.fx('spring'); if (Game.R) { Game.R.sq = -0.14; charImpulse(Game.R, 4.5, 0); charEmote(Game.R, 'open', 0.6); } o.squash = 1; FX.burst('spark', objPos(o, 0.6), 10, { color: 0xffffff, speed: 3, up: 4, size: 0.1, life: 0.5, grav: 6 }); }
   } else if (o.type === 'boost') {
     if (P.y < 0.3) { if (P.padBoost <= 0.2) { Sound.fx('boost'); Cam.shake = Math.max(Cam.shake, 0.15); } P.padBoost = 1.4; }
   } else if (o.type === 'slow') {
@@ -2306,12 +2461,12 @@ function dustAt(P, n) { const p = Track.pos(P.s, P.x, P.y + 0.08, _wp2); FX.burs
 function addScore(v) { Game.stats.score += v; HUD.score(); }
 function addCoins(n, pos) { Game.stats.coins += n; addScore(n * 10); HUD.coins(true); if (pos) FX.burst('spark', pos, Math.min(16, 4 + n), { color: [0xffe066, 0xffc21a, 0xfff6c0], speed: 3, up: 5, size: 0.12, life: 0.6, grav: 8 }); }
 function takeCoin(c) {
-  c.taken = true; Game.stats.coins++; addScore(10); HUD.coins(true); Sound.fx('coin');
+  c.taken = true; Game.stats.coins++; addScore(10); HUD.coins(true); Sound.fx('coin'); if (Game.R && Game.stats.coins % 10 === 0) charEmote(Game.R, 'happy', 0.5);
   _wp.set(c.wx, c.wy, c.wz); FX.burst('spark', _wp, 5, { color: [0xffe066, 0xfff6c0], speed: 2.4, up: 2.4, size: 0.09, life: 0.35, grav: 4 });
   if ((Game.stats.coins & 3) === 0) FX.ring(_wp, 0xffd23f, 0.5);
 }
 function collectPower(o) {
-  const P = Game.P; o.taken = true; o.mesh.visible = false; const pos = objPos(o, o.y);
+  const P = Game.P; o.taken = true; o.mesh.visible = false; const pos = objPos(o, o.y); if (Game.R) charEmote(Game.R, 'happy', 0.9);
   FX.ring(pos, 0xffffff, 1.0);
   switch (o.pt) {
     case 'heart': if (Game.hearts < 5) { Game.hearts++; HUD.hearts(true); HUD.toast('+1 жизнь', 'pink'); } else { addScore(500); HUD.toast('+500 очков', 'pink'); } Sound.fx('heart'); FX.burst('spark', pos, 14, { color: [0xff4a5a, 0xffb0c0], speed: 3, up: 3, size: 0.13, life: 0.7, grav: 2 }); break;
@@ -2351,7 +2506,7 @@ function hitPlayer(o) {
   const P = Game.P; Game.stats.hits++;
   if (o.breakOnHit) breakObj(o, 'hit');
   if (P.shield) { P.shield = false; P.invuln = 1.2; Sound.fx('shieldbreak'); HUD.toast('Щит спас!', 'blue'); Cam.shake = 0.35; FX.burst('spark', heroPos(), 20, { color: [0x5aaaff, 0xffffff], speed: 5, up: 3, size: 0.14, life: 0.6, grav: 4 }); HUD.powers(); return; }
-  Game.hearts--; HUD.hearts(false); P.invuln = 1.8; P.stun = 0.45; P.hitT = 0.5; Sound.fx('hit'); Cam.shake = 0.7; HUD.flash('red');
+  Game.hearts--; HUD.hearts(false); P.invuln = 1.8; P.stun = 0.45; P.hitT = 0.5; Sound.fx('hit'); Cam.shake = 0.7; HUD.flash('red'); if (Game.R) { charImpulse(Game.R, -2.6, -0.6); Game.R.moodT = 0; }
   FX.burst('spark', heroPos(1.2), 10, { color: [0xffffff, 0xffe14a], speed: 3, up: 3, size: 0.12, life: 0.5, grav: 6 });
   if (navigator.vibrate) try { navigator.vibrate(70); } catch (e) { /* ignore */ }
   if (Game.hearts <= 0) gameOver();
@@ -2360,7 +2515,7 @@ function startFall() { Game.state = 'falling'; Game.fallT = 0; Game.stats.hits++
 function respawn() {
   const P = Game.P; const s = Game.lastCP != null ? Game.lastCP + 1 : 4;
   Object.assign(P, { s, x: 0, lane: 1, y: 0, vy: 0, grounded: true, onObj: null, slideT: 0, slideQ: false, invuln: 2.2, stun: 0, hitT: 0, speed: Game.lv.def.v0 * 0.6, padBoost: 0, airT: 0, attackT: 0 });
-  Game.lo = 0; Game.lo2 = 0; Game.cLo = 0; Game.state = 'play'; Cam.yS = 0; HUD.flash('white'); updateCamera(0, true);
+  Game.lo = 0; Game.lo2 = 0; Game.cLo = 0; Game.state = 'play'; Cam.yS = 0; HUD.flash('white'); updateCamera(0, true); if (Game.R) Object.assign(Game.R, { pHY: undefined, pHV: 0, moodT: 0 });
 }
 function gameOver() {
   Game.state = 'over'; Game.endT = 0; Sound.fx('lose'); Sound.setDuck(0.35);
@@ -2479,17 +2634,17 @@ function updatePlayerVisual(dt) {
   R.inner.rotation.y = R.spin;
   const lean = clamp(P.vx / 9, -1, 1);
   let pose = 'run', face = 'smile';
-  if (st === 'intro') pose = 'ready';
+  if (st === 'intro') pose = Game.introT < 1.9 ? 'wave' : 'ready';
   else if (st === 'win') { pose = Game.endT > 0.8 ? 'win' : 'run'; face = 'happy'; }
   else if (st === 'over') { pose = 'sad'; face = 'sad'; }
   else if (st === 'falling') { pose = 'fall'; face = 'open'; }
   else if (P.hitT > 0) { pose = 'hit'; face = 'wince'; }
   else if (P.attackT > 0) { pose = 'spin'; face = 'open'; }
   else if (P.slideT > 0) pose = 'slide';
-  else if (!P.grounded) { pose = P.vy > 0 ? 'jump' : 'fall'; face = P.vy > 3 ? 'open' : 'smile'; }
+  else if (!P.grounded) { pose = 'air'; face = P.vy > 6 ? 'open' : 'smile'; }
+  if (st === 'play' && R.moodT > 0) { R.moodT -= dt; if (face === 'smile') face = R.moodF; }
   if (pose === 'run') R.phase += dt * Math.max(P.speed, 4) * 0.95;
-  setFace(R, face); charPose(R, pose, dt, { t: Game.t, lean: st === 'play' ? lean : 0, vy: P.vy });
-  if (st === 'win' && Game.endT > 0.8) R.root.position.y += Math.abs(Math.sin((Game.endT - 0.8) * 5.5)) * 0.55;
+  setFace(R, face); charPose(R, pose, dt, { t: Game.t, lean: st === 'play' ? lean : 0, vy: P.vy, speed: P.speed });
   R.root.visible = !(P.invuln > 0 && P.pw.star <= 0 && st === 'play' && Math.floor(Game.t * 16) % 2 === 0);
   if (P.pw.star > 0) { _col.setHSL((Game.t * 1.6) % 1, 1, 0.5); tintChar(R, _col, 0.55); R.tinted = true; if (Math.random() < dt * 30) { const p = heroPos(Math.random() * 1.6); FX.spawn('spark', p.x + (Math.random() - .5), p.y, p.z + (Math.random() - .5), 0, 1.5, 0, 0.1, 0.5, _col.getHex(), 0); } }
   else if (R.tinted) { tintChar(R, _col.set(0), 0); R.tinted = false; }
@@ -2648,12 +2803,19 @@ const Menu = {
       const on = sel && this.sel === k; const ped = this.peds[k];
       ped.ring.visible = sel; ped.ring.material.opacity = on ? 0.85 + Math.sin(t * 5) * 0.15 : 0.25; ped.ring.scale.setScalar(on ? 0.85 + Math.sin(t * 3) * 0.05 : 0.7);
       ped.beam.material.opacity = damp(ped.beam.material.opacity, on ? 0.16 : 0, 6, dt);
+      const GEST = { boy: ['hop', 'look', 'cheer'], girl: ['twirl', 'hop', 'cheer'], unicorn: ['prance', 'hop', 'twirl'] };
+      const DUR = { hop: 0.9, look: 2.0, twirl: 1.3, prance: 1.7, cheer: 1.2 };
+      if (R.gestN === undefined) R.gestN = 1.2 + this.order.indexOf(k) * 1.6;
+      if (R.gest) { R.gestT -= dt; if (R.gestT <= 0) { R.gest = null; R.gestN = 3 + Math.random() * 4; } }
+      else if (m === 'menu') { R.gestN -= dt; if (R.gestN <= 0) { const list = GEST[k]; R.gest = list[Math.floor(Math.random() * list.length)]; R.gestT = R.gestD = DUR[R.gest]; } }
+      const gopt = R.gest ? { gesture: R.gest, gp: 1 - R.gestT / R.gestD } : {};
       let pose;
       if (sel) { pose = on ? 'wave' : 'idle'; R.root.rotation.y = on ? R.root.rotation.y + dt * 0.9 : damp(R.root.rotation.y, Math.round(R.root.rotation.y / TAU) * TAU, 3, dt); setFace(R, on ? 'smile' : 'smile'); }
       else { pose = k === 'boy' ? 'akimbo' : k === 'girl' ? 'wave' : 'spread'; R.root.rotation.y = damp(R.root.rotation.y, Math.round(R.root.rotation.y / TAU) * TAU + (k === 'boy' ? 0.2 : k === 'girl' ? -0.2 : 0), 3, dt); }
-      charPose(R, pose, dt, { t: t + (k === 'girl' ? 1.7 : k === 'unicorn' ? 0.9 : 0) });
+      charPose(R, pose, dt, Object.assign({ t: t + (k === 'girl' ? 1.7 : k === 'unicorn' ? 0.9 : 0) }, gopt));
     }
   },
+  gesture(k, g) { const R = this.chars[k]; if (!R) return; const DUR = { hop: 0.9, look: 2.0, twirl: 1.3, prance: 1.7, cheer: 1.2 }; R.gest = g; R.gestT = R.gestD = DUR[g]; },
   /* on the hero screen each model stands right above its card */
   cardX(k) {
     const c = document.querySelector('.sel-card[data-char="' + k + '"]'); if (!c) return null; const r = c.getBoundingClientRect(); if (!r.width) return null;
@@ -2771,7 +2933,7 @@ const UI = {
     if (fromGame) transition(go); else { Menu.mode = 'menu'; showScreen('menu'); this.renderMenuStats(); }
   },
   toSelect() { Menu.mode = 'select'; Menu.sel = Save.data.char; this.sel = Save.data.char; showScreen('select'); this.pickChar(this.sel); },
-  pickChar(k) { this.sel = k; Menu.sel = k; for (const c of $$('.sel-card')) c.classList.toggle('on', c.dataset.char === k); },
+  pickChar(k) { if (this.cur === 'select' && this.sel !== k) Menu.gesture(k, k === 'unicorn' ? 'prance' : 'hop'); this.sel = k; Menu.sel = k; for (const c of $$('.sel-card')) c.classList.toggle('on', c.dataset.char === k); },
   toLevels(fromGame) {
     const go = () => { disposeLevel(); Game.state = 'menu'; Menu.show('levels'); showScreen('levels'); this.renderLevels(); Sound.play('menu'); Sound.setDuck(1); };
     if (fromGame) transition(go); else { Menu.mode = 'levels'; showScreen('levels'); this.renderLevels(); }
