@@ -102,16 +102,17 @@ button{font:inherit;color:inherit}
 
 /* ---------- select ---------- */
 #scr-select{justify-content:space-between;align-items:center}
-.sel-cards{display:flex;gap:clamp(12px,14vw,240px);justify-content:center;width:100%;margin-top:auto}
-.sel-card{position:relative;width:min(260px,42vw);border:4px solid var(--ink);border-radius:22px;padding:12px 14px 14px;cursor:pointer;text-align:center;
+.sel-cards{display:flex;gap:clamp(8px,4vw,64px);justify-content:center;width:100%;margin-top:auto}
+.sel-card{position:relative;width:min(250px,30vw);min-width:0;box-sizing:border-box;border:4px solid var(--ink);border-radius:22px;padding:12px 14px 14px;cursor:pointer;text-align:center;
   background:linear-gradient(180deg,rgba(45,57,98,.92),rgba(33,42,71,.92));box-shadow:0 7px 0 var(--ink),inset 0 0 0 3px var(--panel-edge);
   display:flex;flex-direction:column;gap:4px;transition:transform .2s,box-shadow .2s;animation:rise .5s both}
-.sel-card:nth-child(2){animation-delay:.08s}
+.sel-card:nth-child(2){animation-delay:.08s}.sel-card:nth-child(3){animation-delay:.16s}
 .sel-card.on{transform:translateY(-6px);box-shadow:0 7px 0 var(--ink),inset 0 0 0 3px var(--gold),0 0 0 4px var(--gold),0 0 30px 6px rgba(255,210,63,.55)}
 .sel-card:focus-visible{outline:3px solid var(--gold);outline-offset:4px}
 .sel-name{font-family:var(--display);font-weight:900;font-size:clamp(22px,3.2vw,30px);text-transform:uppercase;letter-spacing:.04em}
 .sel-card[data-char="boy"] .sel-name{color:#ff7468}
 .sel-card[data-char="girl"] .sel-name{color:#ff9fc8}
+.sel-card[data-char="unicorn"] .sel-name{background:linear-gradient(90deg,#c9a2ff,#ff9fd6,#ffd36b,#8fd8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
 .sel-tag{font-weight:800;font-size:clamp(13px,1.6vw,15px);color:var(--muted)}
 .stats{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center;margin-top:6px;font-size:12px;font-weight:800;text-align:left;color:var(--muted)}
 .bar{height:9px;border-radius:6px;background:#141b33;border:2px solid var(--ink);overflow:hidden}
@@ -186,6 +187,7 @@ button{font:inherit;color:inherit}
 .progress .head{position:absolute;top:50%;width:26px;height:26px;border-radius:50%;transform:translate(-50%,-50%);border:3px solid var(--ink);background:#e9262a;
   box-shadow:inset 0 -4px 0 rgba(0,0,0,.2)}
 .progress .head.girl{background:#f7a6c8}
+.progress .head.unicorn{background:conic-gradient(#b68cff,#ff8fd0,#ffd36b,#8fd8ff,#b68cff)}
 .powers{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .pw{display:inline-flex;align-items:center;gap:5px;border:3px solid var(--ink);border-radius:999px;padding:2px 10px 2px 4px;font-family:var(--display);font-weight:800;font-size:13px;
   background:rgba(20,27,51,.82);box-shadow:0 3px 0 rgba(0,0,0,.35);font-variant-numeric:tabular-nums}
@@ -260,6 +262,12 @@ body.touchmode .desk-only{display:none}
 #iris.closed{width:0;height:0;pointer-events:auto}
 
 @media (max-width:640px){
+  .sel-card{width:min(250px,31vw);padding:10px 4px 10px;border-radius:18px}
+  .sel-check{width:24px;height:24px;top:-15px;right:-8px;border-width:2px}
+  .sel-check svg{width:15px;height:15px}
+  .sel-card .stats{display:none}
+  .sel-name{font-size:clamp(13px,3.8vw,22px);letter-spacing:0}
+  .sel-tag{font-size:11.5px;line-height:1.25}
   .hud-mid{position:absolute;left:50%;transform:translateX(-50%);top:calc(max(10px,env(safe-area-inset-top,0px)) + 50px);width:min(46vw,300px)}
   .hud-sub{display:none}
   .logo{margin-top:58px}
@@ -362,6 +370,12 @@ body.touchmode .desk-only{display:none}
         <span class="sel-check"><svg><use href="#i-check"/></svg></span>
         <span class="sel-name">Макс</span>
         <span class="sel-tag">Быстрый и энергичный</span>
+        <span class="stats"><span>Скорость</span><span class="bar"><i></i></span><span>Прыжок</span><span class="bar"><i></i></span><span>Ловкость</span><span class="bar"><i></i></span></span>
+      </button>
+      <button class="sel-card" data-char="unicorn" aria-label="Радужка">
+        <span class="sel-check"><svg><use href="#i-check"/></svg></span>
+        <span class="sel-name">Радужка</span>
+        <span class="sel-tag">Волшебный единорог</span>
         <span class="stats"><span>Скорость</span><span class="bar"><i></i></span><span>Прыжок</span><span class="bar"><i></i></span><span>Ловкость</span><span class="bar"><i></i></span></span>
       </button>
       <button class="sel-card" data-char="girl" aria-label="Аля">
@@ -1029,6 +1043,7 @@ function cMesh(geo, mat, parent, x = 0, y = 0, z = 0, outline = false, shadow = 
 }
 
 function buildCharacter(kind) {
+  if (kind === 'unicorn') return buildUnicorn();
   const boy = kind === 'boy';
   const mats = [];
   const M = (color, o = {}) => { const m = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.78, metalness: 0 }, o)); mats.push(m); return m; };
@@ -1173,7 +1188,7 @@ function setFace(R, f) {
   R.frown.visible = f === 'wince' || f === 'sad';
   R.faceSq = f === 'happy' ? 0.18 : f === 'wince' ? 0.3 : 1;
   const tilt = f === 'wince' ? -0.32 : f === 'sad' ? 0.3 : f === 'open' ? -0.05 : 0.12;
-  R.brows.forEach((b, i) => { const sd = i ? 1 : -1; b.rotation.z = Math.PI / 2 + sd * tilt; b.position.y = f === 'open' ? 0.145 : 0.128; });
+  R.brows.forEach((b, i) => { const sd = i ? 1 : -1; b.rotation.z = Math.PI / 2 + sd * tilt; b.position.y = (R.browY || 0.128) + (f === 'open' ? 0.017 : 0); });
 }
 
 const JNT = ['bY', 'bX', 'bZ', 'tX', 'tY', 'tZ', 'hX', 'hY', 'hZ', 'hp0', 'hp1', 'hz0', 'hz1', 'kn0', 'kn1', 'ft0', 'ft1', 'sx0', 'sx1', 'sy0', 'sy1', 'sz0', 'sz1', 'ex0', 'ex1', 'ey0', 'ey1', 'ez0', 'ez1'];
@@ -1182,10 +1197,11 @@ const SDS = [-1, 1];
 function charPose(R, st, dt, o = {}) {
   const T = poseBase(), t = o.t || 0; let k = 16;
   switch (st) {
-    case 'idle': case 'akimbo': case 'wave': {
+    case 'idle': case 'akimbo': case 'wave': case 'spread': {
       const b = Math.sin(t * 2.1); T.bY = 0.8 + b * 0.006; T.tX = 0.02 + b * 0.012; T.hY = Math.sin(t * 0.6) * 0.28; T.hX = Math.sin(t * 0.83) * 0.05 - 0.03; T.hZ = Math.sin(t * 0.5) * 0.04;
       for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (0.14 + b * 0.02); T['ex' + i] = -0.25; }
       if (st === 'akimbo') for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * 0.8; T['sx' + i] = -0.05; T['ez' + i] = -SDS[i] * 1.55; T['ex' + i] = -0.3; }
+      if (st === 'spread') for (let i = 0; i < 2; i++) { T['sz' + i] = SDS[i] * (0.78 + b * 0.05); T['ex' + i] = -0.12; T['sx' + i] = -0.12; }
       if (st === 'wave') { T.sz1 = 2.45; T.sx1 = -0.25; T.ez1 = -0.45 + Math.sin(t * 7) * 0.4; T.ex1 = -0.15; T.sz0 = -0.3; T.ex0 = -0.45; T.hZ = 0.1; T.hY *= 0.4; }
       break;
     }
@@ -1260,8 +1276,176 @@ function charPose(R, st, dt, o = {}) {
     let tw = 0; if (R.earTw > 0) { R.earTw -= dt; tw = Math.sin(R.earTw * 42) * 0.18; }
     R.ears[0].rotation.x = tw; R.ears[1].rotation.x = -tw * 0.6;
   }
+  if (R.wings) {
+    const air = st === 'jump' || st === 'fall'; const sp = air ? 22 : st === 'win' ? 13 : st === 'run' ? 9 : 3.2;
+    const amp = air ? 0.6 : st === 'win' ? 0.45 : st === 'run' ? 0.14 : 0.12; R.wingT = (R.wingT || 0) + dt * sp; const f = Math.sin(R.wingT) * amp;
+    for (const w of R.wings) { w.g.rotation.z = w.sd * (f + (air ? 0.25 : 0)); w.g.rotation.y = damp(w.g.rotation.y, -w.sd * (st === 'slide' ? 1.0 : air ? 0.2 : 0.35), 10, dt); }
+    if (R.hornTip) R.hornTip.material.opacity = 0.65 + Math.sin((o.t || 0) * 3.3) * 0.35;
+  }
 }
 function tintChar(R, color, amt) { for (const m of R.mats) { if (!m.emissive) continue; m.emissive.copy(color); m.emissiveIntensity = amt; } }
+
+/* ================= the unicorn hero: same rig and proportions as the kids, pony features on top ================= */
+function unicornTextures() {
+  if (TEX.tiedye) return;
+  const R = makeRng(77);
+  TEX.tiedye = cTex(256, 256, (g, w, h) => {
+    const base = g.createLinearGradient(0, 0, 0, h); base.addColorStop(0, '#ff6fbf'); base.addColorStop(0.42, '#c27dff'); base.addColorStop(0.72, '#4fb8ff'); base.addColorStop(1, '#3fd8c0');
+    g.fillStyle = base; g.fillRect(0, 0, w, h);
+    const blobs = ['rgba(255,214,90,.8)', 'rgba(80,180,255,.75)', 'rgba(255,100,190,.75)', 'rgba(170,110,255,.75)', 'rgba(90,230,200,.65)'];
+    for (let i = 0; i < 16; i++) {
+      const x = R.f() * w, y = R.f() * h, r = 30 + R.f() * 60; const gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, blobs[i % blobs.length]); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    }
+    g.globalAlpha = 0.18; g.strokeStyle = '#ffffff'; g.lineWidth = 6;
+    for (let i = 0; i < 5; i++) { g.beginPath(); g.ellipse(w * 0.5, h * 0.55, 30 + i * 26, 20 + i * 20, 0.4, 0, TAU); g.stroke(); }
+    g.globalAlpha = 1;
+  });
+  TEX.horn = cTex(64, 128, (g, w, h) => {
+    g.fillStyle = '#fbf4ff'; g.fillRect(0, 0, w, h);
+    const cols = ['#e6c8ff', '#ffc2e4', '#c8b4ff'];
+    g.save(); g.translate(w / 2, h / 2); g.rotate(-0.62);
+    for (let i = -10; i < 10; i++) { g.fillStyle = cols[(i + 30) % 3]; g.fillRect(-120, i * 16, 240, 7); }
+    g.restore();
+  });
+}
+
+function buildUnicorn() {
+  unicornTextures();
+  const mats = [];
+  const M = (color, o = {}) => { const m = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.7, metalness: 0 }, o)); mats.push(m); return m; };
+  const mFur = M(0xd7bdf0, { roughness: 0.6 }), mMuz = M(0xecdcf8, { roughness: 0.55 }), mHoof = M(0xb4479f, { roughness: 0.28, metalness: 0.1 });
+  const mPink = M(0xffb3d9, { roughness: 0.6 }), mShirt = M(0xffffff, { map: TEX.tiedye, roughness: 0.75 }), mGold = M(0xf2b632, { metalness: 0.6, roughness: 0.3 });
+  const mWarm = M(0xf7f5ff, { roughness: 0.95 }), mWarm2 = M(0xff8cc6, { roughness: 0.9 });
+  const mWhite = M(0xffffff, { roughness: 0.25 }), mBlack = M(0x1a1416, { roughness: 0.35 }), mIris = M(0x5b2a72, { roughness: 0.3 }), mMouth = M(0x8a2c4a, { roughness: 0.5 });
+  const mCheek = M(0xffa6c9, { roughness: 0.8 }), mBrow = M(0xa77ccf), mNost = M(0xd28ab6, { roughness: 0.6 });
+  const mHorn = M(0xffffff, { map: TEX.horn, roughness: 0.35, emissive: 0x7a4a9a, emissiveIntensity: 0.12 });
+  const mWing = M(0xe2c8ff, { roughness: 0.5 }), mWing2 = M(0xffbfe3, { roughness: 0.5 });
+  const mHeart = M(0xff9fd6, { roughness: 0.35, emissive: 0x7a2a6a, emissiveIntensity: 0.2 });
+  const mane = [0xb68cff, 0xff8fd0, 0xffd36b, 0x8fd8ff, 0x9a7cff, 0xff9fb8].map((c) => M(c, { roughness: 0.5 }));
+  const mHL = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+  const root = new THREE.Group(); const inner = new THREE.Group(); root.add(inner); inner.scale.setScalar(0.86);
+  const R = { root, inner, mats, kind: 'unicorn', legs: [], arms: [], eyes: [], brows: [], wings: [], faceSq: 1, blinkT: 2, phase: 0, tailA: 0.3, tailV: 0, tailZ: 0, tailZV: 0, earT: 2, earTw: 0, spin: 0, browY: 0.165 };
+  const body = new THREE.Group(); body.position.y = 0.8; inner.add(body); R.body = body;
+  const hips = cMesh(new THREE.SphereGeometry(0.21, 18, 12), mFur, body, 0, 0, 0, true); hips.scale.set(1.15, 0.85, 0.95);
+
+  for (const sd of [-1, 1]) {
+    const hip = new THREE.Group(); hip.position.set(0.11 * sd, -0.03, 0); body.add(hip);
+    cMesh(new THREE.CapsuleGeometry(0.105, 0.2, 6, 14), mFur, hip, 0, -0.17, 0, true);
+    const knee = new THREE.Group(); knee.position.y = -0.35; hip.add(knee);
+    cMesh(new THREE.CapsuleGeometry(0.09, 0.16, 6, 14), mFur, knee, 0, -0.11, 0, true);
+    cMesh(new THREE.CylinderGeometry(0.108, 0.104, 0.14, 16), mWarm, knee, 0, -0.22, 0, true, false);
+    cMesh(new THREE.CylinderGeometry(0.11, 0.11, 0.035, 16), mWarm2, knee, 0, -0.16, 0, false, false);
+    const foot = new THREE.Group(); foot.position.set(0, -0.33, 0); knee.add(foot);
+    cMesh(new THREE.CylinderGeometry(0.098, 0.118, 0.12, 18), mHoof, foot, 0, -0.04, 0.012, true);
+    R.legs.push({ hip, knee, foot, sd });
+  }
+
+  const torso = new THREE.Group(); body.add(torso); R.torso = torso;
+  const chest = cMesh(new THREE.CapsuleGeometry(0.2, 0.2, 8, 18), mShirt, torso, 0, 0.27, 0, true); chest.scale.set(1.12, 1, 0.86);
+  cMesh(new THREE.CylinderGeometry(0.235, 0.3, 0.27, 22), mShirt, torso, 0, 0.03, 0, true);
+  const hem = cMesh(new THREE.TorusGeometry(0.297, 0.02, 8, 28), mGold, torso, 0, -0.105, 0, false, false); hem.rotation.x = Math.PI / 2;
+  for (const sd of [-1, 1]) { const v = cMesh(new THREE.BoxGeometry(0.022, 0.13, 0.02), mGold, torso, 0.042 * sd, 0.43, 0.158, false, false); v.rotation.z = sd * 0.55; v.rotation.x = -0.25; }
+  const goldHeart = cMesh(G3.heart, mGold, torso, 0, 0.29, 0.152, false, false); goldHeart.scale.set(0.2, 0.2, 0.18);
+  const heart = cMesh(G3.heart, mHeart, torso, 0, 0.292, 0.17, false, false); heart.scale.set(0.135, 0.135, 0.14);
+  cMesh(new THREE.CylinderGeometry(0.088, 0.105, 0.16, 14), mFur, torso, 0, 0.5, 0, false, false);
+
+  for (const sd of [-1, 1]) {
+    const sh = new THREE.Group(); sh.position.set(0.255 * sd, 0.43, 0); torso.add(sh);
+    cMesh(new THREE.CapsuleGeometry(0.078, 0.1, 6, 12), mShirt, sh, 0, -0.07, 0, true);
+    cMesh(new THREE.CylinderGeometry(0.084, 0.084, 0.03, 14), mGold, sh, 0, -0.16, 0, false, false);
+    const el = new THREE.Group(); el.position.y = -0.24; sh.add(el);
+    cMesh(new THREE.CapsuleGeometry(0.066, 0.13, 6, 12), mFur, el, 0, -0.08, 0, true);
+    const hand = cMesh(new THREE.CylinderGeometry(0.078, 0.09, 0.11, 16), mHoof, el, 0, -0.24, 0, true);
+    R.arms.push({ sh, el, hand, sd });
+  }
+
+  const headG = new THREE.Group(); headG.position.y = 0.55; torso.add(headG); R.head = headG;
+  const cran = cMesh(new THREE.SphereGeometry(0.33, 32, 24), mFur, headG, 0, 0.33, -0.03, true); cran.scale.set(1, 0.95, 0.95);
+  const muz = cMesh(new THREE.SphereGeometry(0.2, 24, 18), mMuz, headG, 0, 0.17, 0.2, true); muz.scale.set(1.05, 0.8, 0.95);
+  for (const sd of [-1, 1]) { const n = cMesh(new THREE.SphereGeometry(0.022, 10, 8), mNost, headG, 0.06 * sd, 0.2, 0.382, false, false); n.scale.set(1, 0.6, 0.4); }
+  const face = new THREE.Group(); face.position.set(0, 0.29, 0); headG.add(face);
+  for (const sd of [-1, 1]) {
+    const eg = new THREE.Group(); eg.position.set(0.135 * sd, 0.075, 0.25); eg.rotation.y = sd * 0.42; eg.scale.setScalar(1.12); face.add(eg);
+    const scl = cMesh(new THREE.SphereGeometry(0.083, 18, 14), mWhite, eg, 0, 0, 0, false, false); scl.scale.set(1, 1.2, 0.5);
+    const iris = cMesh(new THREE.SphereGeometry(0.064, 18, 14), mIris, eg, 0, -0.006, 0.022, false, false); iris.scale.set(1, 1.12, 0.45);
+    const pup = cMesh(new THREE.SphereGeometry(0.034, 12, 10), mBlack, eg, 0, -0.006, 0.037, false, false); pup.scale.set(1, 1.1, 0.4);
+    cMesh(new THREE.SphereGeometry(0.019, 8, 6), mHL, eg, -0.019 * sd - 0.004, 0.026, 0.049, false, false);
+    cMesh(new THREE.SphereGeometry(0.009, 8, 6), mHL, eg, 0.02, -0.027, 0.047, false, false);
+    const lash = cMesh(new THREE.TorusGeometry(0.08, 0.011, 6, 16, Math.PI * 0.8), mBlack, eg, 0, 0.014, 0.03, false, false); lash.rotation.z = Math.PI * 0.1; lash.scale.set(1, 1.18, 1);
+    for (const k of [0, 1]) { const fl = cMesh(new THREE.BoxGeometry(0.04, 0.013, 0.012), mBlack, eg, (0.074 + k * 0.012) * sd, 0.07 - k * 0.022, 0.025, false, false); fl.rotation.z = sd * (0.65 - k * 0.3); }
+    R.eyes.push(eg);
+    const brow = cMesh(new THREE.CapsuleGeometry(0.011, 0.055, 4, 8), mBrow, face, 0.135 * sd, R.browY, 0.27, false, false);
+    brow.rotation.order = 'YXZ'; brow.rotation.set(0, sd * 0.4, Math.PI / 2 + sd * 0.12); R.brows.push(brow);
+    const ck = cMesh(new THREE.SphereGeometry(0.05, 12, 8), mCheek, face, 0.205 * sd, -0.035, 0.215, false, false); ck.scale.set(1, 0.62, 0.35); ck.rotation.y = sd * 0.7;
+  }
+  R.smile = cMesh(new THREE.TorusGeometry(0.062, 0.012, 8, 20, Math.PI), mMouth, face, 0, -0.165, 0.35, false, false); R.smile.rotation.set(-0.55, 0, Math.PI);
+  R.open = new THREE.Group(); R.open.position.set(0, -0.18, 0.345); face.add(R.open);
+  const om = cMesh(new THREE.SphereGeometry(0.052, 16, 12), mMouth, R.open, 0, 0, 0, false, false); om.scale.set(1, 0.75, 0.36);
+  const tg = cMesh(new THREE.SphereGeometry(0.032, 12, 8), M(0xff8a9a), R.open, 0, -0.018, 0.009, false, false); tg.scale.set(1, 0.5, 0.35);
+  R.open.visible = false;
+  R.frown = cMesh(new THREE.TorusGeometry(0.045, 0.011, 8, 16, Math.PI), mMouth, face, 0, -0.2, 0.338, false, false); R.frown.rotation.x = -0.45; R.frown.visible = false;
+
+  /* pony ears */
+  R.ears = [];
+  for (const sd of [-1, 1]) {
+    const eg = new THREE.Group(); eg.position.set(0.17 * sd, 0.6, -0.1); eg.rotation.z = -sd * 0.32; headG.add(eg);
+    const outer = cMesh(new THREE.ConeGeometry(0.085, 0.22, 14), mFur, eg, 0, 0.08, 0, true); outer.scale.set(1, 1, 0.55);
+    const inr = cMesh(new THREE.ConeGeometry(0.05, 0.15, 12), mPink, eg, 0, 0.065, 0.03, false, false); inr.scale.set(1, 1, 0.35);
+    R.ears.push(eg);
+  }
+  /* spiral horn */
+  const horn = new THREE.Group(); horn.position.set(0, 0.6, 0.12); horn.rotation.x = 0.38; headG.add(horn);
+  cMesh(new THREE.ConeGeometry(0.062, 0.38, 18, 6), mHorn, horn, 0, 0.19, 0, true);
+  cMesh(new THREE.TorusGeometry(0.062, 0.016, 8, 18), mPink, horn, 0, 0.01, 0, false, false).rotation.x = Math.PI / 2;
+  const tip = glowSprite(0xffe6ff, 0.32); tip.position.y = 0.38; horn.add(tip); R.hornTip = tip;
+
+  /* rainbow mane */
+  const hair = new THREE.Group(); hair.position.set(0, 0.31, 0); headG.add(hair); R.hair = hair;
+  const lock = (r, len, mat, x, y, z, dir, wide = 1.5, flat = 0.75) => {
+    const m = cMesh(new THREE.CapsuleGeometry(r, len, 5, 10), mat, hair, x, y, z, true, false);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize()); m.scale.set(wide, 1, flat); return m;
+  };
+  for (let i = 0; i < 7; i++) {
+    const th = 0.25 + i * 0.3; const p = new THREE.Vector3(0, Math.cos(th) * 0.335, -Math.sin(th) * 0.335 - 0.03);
+    lock(0.075 - i * 0.003, 0.17, mane[i % 6], 0, p.y, p.z, new THREE.Vector3(0, -Math.sin(th), -Math.cos(th)), 1.7, 0.7);
+  }
+  for (const sd of [-1, 1]) for (let k = 0; k < 4; k++) {
+    lock(0.06, 0.2, mane[(k + (sd > 0 ? 2 : 0)) % 6], sd * (0.265 - k * 0.012), -0.04 - k * 0.11, -0.07 - k * 0.035, new THREE.Vector3(sd * 0.12, -1, -0.25), 1.25, 0.8);
+  }
+  lock(0.068, 0.2, mane[0], 0.04, 0.27, 0.2, new THREE.Vector3(-0.9, -0.5, 0.5), 1.4, 0.7);
+  lock(0.06, 0.18, mane[1], -0.09, 0.22, 0.25, new THREE.Vector3(-0.8, -0.9, 0.35), 1.3, 0.7);
+  lock(0.055, 0.15, mane[3], -0.18, 0.16, 0.24, new THREE.Vector3(-0.35, -1, 0.15), 1.2, 0.7);
+  lock(0.055, 0.14, mane[2], 0.15, 0.24, 0.2, new THREE.Vector3(0.55, -0.6, 0.45), 1.2, 0.7);
+  R.hairBase = hair.position.y;
+
+  /* rainbow tail (springs like the girl's ponytail) */
+  const tail = new THREE.Group(); tail.position.set(0, -0.02, -0.2); body.add(tail); R.tail = tail;
+  for (let strand = 0; strand < 3; strand++) {
+    const ox = (strand - 1) * 0.05;
+    for (let k = 0; k < 5; k++) {
+      const m = cMesh(new THREE.CapsuleGeometry(0.075 - k * 0.009, 0.13, 5, 10), mane[(k + strand * 2) % 6], tail, ox + Math.sin(k * 0.9 + strand) * 0.03, -0.06 - k * 0.12, -0.05 - k * 0.055 + (k > 3 ? 0.04 : 0), true, false);
+      m.rotation.x = 0.38 + k * 0.1; m.rotation.z = (strand - 1) * 0.15;
+    }
+  }
+
+  /* little wings */
+  for (const sd of [-1, 1]) {
+    const wg = new THREE.Group(); wg.position.set(0.13 * sd, 0.4, -0.15); wg.rotation.y = -sd * 0.5; torso.add(wg);
+    cMesh(new THREE.SphereGeometry(0.07, 12, 10), mWing, wg, 0, 0, 0, true, false);
+    for (let k = 0; k < 4; k++) {
+      const len = 0.24 + k * 0.08, ang = 0.18 + k * 0.32; const dir = new THREE.Vector3(sd * Math.cos(ang), Math.sin(ang), 0);
+      const f = cMesh(new THREE.CapsuleGeometry(0.056, len, 4, 10), k % 2 ? mWing2 : mWing, wg, dir.x * (len / 2 + 0.05), dir.y * (len / 2 + 0.05), -0.01 * k, true);
+      f.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir); f.scale.set(1, 1, 0.45);
+    }
+    R.wings.push({ g: wg, sd });
+  }
+
+  root.traverse((o) => { if (o.isMesh && o.material !== OUTLINE_MAT) o.frustumCulled = false; });
+  setFace(R, 'smile');
+  return R;
+}
 
 /* ================= worlds & levels ================= */
 const LANES = [-2.2, 0, 2.2];
@@ -2379,7 +2563,7 @@ function continueFromCP() { UI.modal(null); Game.hearts = 3; HUD.hearts(true); S
 
 /* ================= menu world: a floating island with both heroes ================= */
 const Menu = {
-  group: null, active: false, mode: 'menu', t: 0, boy: null, girl: null, sel: 'boy', bobs: [], spins: [],
+  group: null, active: false, mode: 'menu', t: 0, chars: {}, order: ['boy', 'unicorn', 'girl'], sel: 'boy', bobs: [], spins: [],
   build() {
     const g = new THREE.Group(); scene.add(g); this.group = g; g.visible = false;
     const B = new Batcher(); const rng = makeRng(42);
@@ -2422,11 +2606,9 @@ const Menu = {
     const st = new THREE.Group(); st.position.set(5.2, 4.8, -4.6); g.add(st); mesh(G3.star, MAT.star, st, 0, 0, 0, 1.3); st.add(glowSprite(0xffe14a, 2.2)); this.spins.push(st); this.bobs.push({ o: st, y: 4.8, ph: 2 });
     const gm = new THREE.Group(); gm.position.set(-6.6, 5.1, -6); g.add(gm); mesh(G3.oct, MAT.gem, gm, 0, 0, 0, 0.42, 0.62, 0.42); gm.add(glowSprite(0x5ab8ff, 2.4)); this.spins.push(gm); this.bobs.push({ o: gm, y: 5.1, ph: 4 });
     /* heroes */
-    this.boy = buildCharacter('boy'); this.girl = buildCharacter('girl');
-    this.boy.root.position.set(-0.9, 0, 1.6); this.girl.root.position.set(0.9, 0, 1.6);
-    g.add(this.boy.root); g.add(this.girl.root);
     this.peds = {};
-    for (const [k, R] of [['boy', this.boy], ['girl', this.girl]]) {
+    for (const k of this.order) { const R = buildCharacter(k); this.chars[k] = R; R.root.position.set(0, 0, 1.6); g.add(R.root); }
+    for (const [k, R] of Object.entries(this.chars)) {
       const ring = new THREE.Mesh(G3.ring, MAT.pedestal.clone()); ring.position.set(R.root.position.x, 0.03, R.root.position.z); ring.scale.setScalar(0.8); g.add(ring);
       const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.85, 3.4, 28, 1, true), new THREE.MeshBasicMaterial({ color: 0xffd23f, transparent: true, opacity: 0.0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
       beam.position.set(R.root.position.x, 1.7, R.root.position.z); g.add(beam); this.peds[k] = { ring, beam };
@@ -2436,7 +2618,7 @@ const Menu = {
     this.active = true; this.mode = mode; this.group.visible = true;
     const W = WORLDS[0]; applyWorldLook(W); scene.fog = new THREE.Fog(0xc4e6ff, 90, 420); skyU.sunDir.value.set(-0.35, 0.3, -0.89).normalize();
     if (mode === 'select') this.sel = Save.data.char;
-    for (const R of [this.boy, this.girl]) R.root.rotation.y = 0;
+    for (const R of Object.values(this.chars)) R.root.rotation.y = 0;
   },
   hide() { this.active = false; this.group.visible = false; },
   update(dt) {
@@ -2445,7 +2627,7 @@ const Menu = {
     let cp, lk;
     if (m === 'select') { cp = portrait ? [0, 1.7, 7.6] : [0, 1.35, 5.4]; lk = portrait ? [0, 0.95, 1.4] : [0, 0.42, 1.4]; }
     else if (m === 'levels') { cp = [Math.sin(t * 0.1) * 3, 6, 15]; lk = [0, 7, -10]; }
-    else { cp = portrait ? [Math.sin(t * 0.25) * 0.25, 1.55, 6.9] : [Math.sin(t * 0.25) * 0.5, 1.45, 6.3]; lk = portrait ? [0, 0.95, 1.6] : [0, 0.6, 1.4]; }
+    else { cp = portrait ? [Math.sin(t * 0.25) * 0.25, 1.75, 8.4] : [Math.sin(t * 0.25) * 0.5, 1.5, 6.6]; lk = portrait ? [0, 1.0, 1.6] : [0, 0.62, 1.4]; }
     Cam.c.set(cp[0], cp[1], cp[2]); Cam.d.set(lk[0], lk[1], lk[2]);
     if (!this.camInit) { Cam.pos.copy(Cam.c); Cam.look.copy(Cam.d); this.camInit = true; }
     Cam.pos.lerp(Cam.c, 1 - Math.exp(-dt * 3)); Cam.look.lerp(Cam.d, 1 - Math.exp(-dt * 3.5));
@@ -2455,16 +2637,29 @@ const Menu = {
     for (const b of this.bobs) { b.o.position.y = b.y + Math.sin(t * 1.4 + b.ph) * 0.25; b.o.rotation.y = Math.sin(t * 0.5 + b.ph) * 0.3; }
     for (const s of this.spins) s.rotation.y += dt * 2.2;
     const sel = m === 'select';
-    const sep = portrait ? 0.64 : 0.9; this.boy.root.position.x = -sep; this.girl.root.position.x = sep; this.peds.boy.ring.position.x = this.peds.boy.beam.position.x = -sep; this.peds.girl.ring.position.x = this.peds.girl.beam.position.x = sep;
-    for (const [k, R] of [['boy', this.boy], ['girl', this.girl]]) {
+    const sep = portrait ? 0.92 : 1.3;
+    for (let i = 0; i < this.order.length; i++) {
+      const k = this.order[i], R = this.chars[k]; let tx = (i - 1) * sep;
+      if (sel) { const x = this.cardX(k); if (x !== null) tx = x; }
+      R.root.position.x = this.posInit ? damp(R.root.position.x, tx, 7, dt) : tx; this.peds[k].ring.position.x = this.peds[k].beam.position.x = R.root.position.x;
+    }
+    this.posInit = true;
+    for (const [k, R] of Object.entries(this.chars)) {
       const on = sel && this.sel === k; const ped = this.peds[k];
       ped.ring.visible = sel; ped.ring.material.opacity = on ? 0.85 + Math.sin(t * 5) * 0.15 : 0.25; ped.ring.scale.setScalar(on ? 0.85 + Math.sin(t * 3) * 0.05 : 0.7);
       ped.beam.material.opacity = damp(ped.beam.material.opacity, on ? 0.16 : 0, 6, dt);
       let pose;
       if (sel) { pose = on ? 'wave' : 'idle'; R.root.rotation.y = on ? R.root.rotation.y + dt * 0.9 : damp(R.root.rotation.y, Math.round(R.root.rotation.y / TAU) * TAU, 3, dt); setFace(R, on ? 'smile' : 'smile'); }
-      else { pose = k === 'boy' ? 'akimbo' : 'wave'; R.root.rotation.y = damp(R.root.rotation.y, Math.round(R.root.rotation.y / TAU) * TAU + (k === 'boy' ? 0.18 : -0.18), 3, dt); }
-      charPose(R, pose, dt, { t: t + (k === 'girl' ? 1.7 : 0) });
+      else { pose = k === 'boy' ? 'akimbo' : k === 'girl' ? 'wave' : 'spread'; R.root.rotation.y = damp(R.root.rotation.y, Math.round(R.root.rotation.y / TAU) * TAU + (k === 'boy' ? 0.2 : k === 'girl' ? -0.2 : 0), 3, dt); }
+      charPose(R, pose, dt, { t: t + (k === 'girl' ? 1.7 : k === 'unicorn' ? 0.9 : 0) });
     }
+  },
+  /* on the hero screen each model stands right above its card */
+  cardX(k) {
+    const c = document.querySelector('.sel-card[data-char="' + k + '"]'); if (!c) return null; const r = c.getBoundingClientRect(); if (!r.width) return null;
+    const nx = (r.left + r.width / 2) / window.innerWidth * 2 - 1, ny = -((r.top / window.innerHeight) * 2 - 1);
+    const p = _v3.set(nx, ny, 0.5).unproject(camera).sub(camera.position).normalize(); const d = (1.6 - camera.position.z) / p.z;
+    return camera.position.x + p.x * d;
   },
 };
 
@@ -2495,7 +2690,7 @@ const HUD = {
   init() { for (const id of ['h-hearts', 'h-gems', 'h-dist', 'h-time', 'h-fill', 'h-head', 'h-prog', 'h-powers', 'h-coins', 'h-coinpill', 'h-score']) this.e[id] = document.getElementById(id); },
   reset() {
     this.hearts(true); this.gems(); this.coins(false); this.score(); this.lastDist = -1; this.lastTime = -1; this.lastPw = null; this.powers();
-    this.e['h-head'].className = 'head' + (Save.data.char === 'girl' ? ' girl' : '');
+    this.e['h-head'].className = 'head ' + Save.data.char;
     for (const el of $$('.cp', this.e['h-prog'])) el.remove();
     for (const s of Game.lv.cps) { const d = document.createElement('div'); d.className = 'cp'; d.style.left = (s / Game.lv.L * 100) + '%'; d.dataset.s = s; this.e['h-prog'].appendChild(d); }
   },
@@ -2663,7 +2858,7 @@ window.addEventListener('keydown', (e) => {
   }
   if (e.code === 'Enter' && UI.cur === 'menu' && !transitioning) { Sound.init(); startLevel(UI.playTarget()); }
   if (e.code === 'Escape' && (UI.cur === 'select' || UI.cur === 'levels')) UI.toMenu(false);
-  if ((e.code === 'ArrowLeft' || e.code === 'ArrowRight') && UI.cur === 'select') UI.pickChar(e.code === 'ArrowLeft' ? 'boy' : 'girl');
+  if ((e.code === 'ArrowLeft' || e.code === 'ArrowRight') && UI.cur === 'select') { const o = Menu.order; const i = o.indexOf(UI.sel); UI.pickChar(o[clamp(i + (e.code === 'ArrowLeft' ? -1 : 1), 0, o.length - 1)]); }
 });
 for (const b of $$('.tbtn')) {
   b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); Sound.init(); b.classList.add('on'); act(b.dataset.key); });
@@ -2705,7 +2900,7 @@ async function boot() {
   TEX.startBanner = TEX.banner('СТАРТ', '#46abff', '#ffffff'); TEX.finishBanner = TEX.banner('ФИНИШ', '#ff5d78', '#ffffff');
   initGeos(); initMats(); FX.init(); Amb.init(); Streaks.init(); HUD.init(); Menu.build(); UI.init();
   Save.data.unlocked = LEVELS.length; Save.save(); /* all levels are open */
-  if (!Save.data.char || !['boy', 'girl'].includes(Save.data.char)) Save.data.char = 'boy';
+  if (!Save.data.char || !['boy', 'girl', 'unicorn'].includes(Save.data.char)) Save.data.char = 'boy';
   Game.state = 'menu'; Menu.show('menu'); showScreen('menu'); UI.renderMenuStats();
   Sound.want = 'menu';
   $('#loading').hidden = true;
