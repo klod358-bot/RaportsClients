@@ -4,6 +4,7 @@
 
 | Дата | Отчёт |
 | --- | --- |
+| 27.10.2026 | [Транспортная развязка: 3D-модель очередей строительства](reports/2026-10-27-transportnaya-razvyazka-3d/index.html) |
 | 23.10.2026 | [Изменение заказа после согласования: повторное согласование заказ-наряда](reports/2026-10-23-izmenenie-zakaza-klienta/index.html) |
 
 Чтобы страницы открывались по ссылке, включите GitHub Pages: Settings → Pages → Deploy from a branch → `main` / `(root)`.
