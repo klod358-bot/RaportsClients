@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Развязка: картинки и видео</title>
+<meta name="description" content="Изображения и видео 3D-модели транспортной развязки для презентации">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbfaf7;--surface:#ffffff;--text:#1f1e1b;--muted:#64625c;--edge:#b8b6ad;--rule:#e4e2da;--accent:#2f6fd6;--warn:#d99a00;--link:#2f5fb3;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151618;--surface:#1c1d20;--text:#ebe9e3;--muted:#a19f98;--edge:#5d5e63;--rule:#2e2f33;--accent:#6c9eff;--warn:#f0b429;--link:#8fb4ff;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151618;--surface:#1c1d20;--text:#ebe9e3;--muted:#a19f98;--edge:#5d5e63;--rule:#2e2f33;--accent:#6c9eff;--warn:#f0b429;--link:#8fb4ff;color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 "PT Sans","Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+main{max-width:800px;margin:0 auto;padding:40px 16px 72px}
+a{color:var(--link)}
+.back{font-size:14px;color:var(--muted);text-decoration:none}
+.back:hover{text-decoration:underline}
+h1{font-size:30px;line-height:1.2;margin:16px 0 8px;letter-spacing:-.01em}
+.meta{color:var(--muted);font-size:14px;margin:0 0 32px}
+h2{font-size:21px;line-height:1.3;margin:44px 0 12px;padding-top:20px;border-top:1px solid var(--rule)}
+p,ul,ol{margin:0 0 14px}
+li{margin:4px 0}
+.lead{font-size:17px}
+.table-wrap{overflow-x:auto;margin:0 0 16px;border:1px solid var(--rule);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--rule)}
+th{font-weight:700;background:color-mix(in srgb,var(--rule) 45%,transparent)}
+tr:last-child td{border-bottom:0}
+td.num{white-space:nowrap;color:var(--muted)}
+td.rowhead{font-weight:700}
+blockquote{margin:0 0 16px;padding:12px 16px;border-left:3px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0}
+figure{margin:20px 0 16px;padding:12px;background:var(--surface);border:1px solid var(--rule);border-radius:10px}
+figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+.diagram{display:block;width:100%;height:auto;font-family:inherit}
+.d-box{fill:none;stroke:var(--edge);stroke-width:1.25}
+.d-accent{fill:color-mix(in srgb,var(--accent) 12%,transparent);stroke:var(--accent);stroke-width:2}
+.d-warn{fill:color-mix(in srgb,var(--warn) 14%,transparent);stroke:var(--warn);stroke-width:2}
+.d-line{fill:none;stroke:var(--edge);stroke-width:1.25}
+.d-head{fill:var(--edge)}
+.d-title{fill:var(--text);font-size:15px;font-weight:700}
+.d-sub{fill:var(--muted);font-size:11.5px}
+.d-name{fill:var(--text);font-size:13px;font-weight:700}
+.d-body{fill:var(--text);font-size:11.5px}
+.d-label{fill:var(--muted);font-size:11.5px}
+.checklist{list-style:none;padding-left:0}
+.checklist li{position:relative;padding-left:28px}
+.checklist li::before{content:"";position:absolute;left:2px;top:6px;width:14px;height:14px;border:1.5px solid var(--edge);border-radius:3px}
+.card{display:block;padding:16px 18px;margin:0 0 12px;border:1px solid var(--rule);border-radius:10px;background:var(--surface);text-decoration:none;color:inherit}
+.card:hover{border-color:var(--edge)}
+.card h3{margin:0 0 4px;font-size:18px;color:var(--link)}
+.card p{margin:0;color:var(--muted);font-size:14.5px}
+@media (max-width:560px){h1{font-size:24px}main{padding-top:24px}table{font-size:13.5px}th,td{padding:8px 10px}figure{overflow-x:auto}.diagram{min-width:680px}}
+.gallery{display:grid;gap:22px;margin-top:8px}
+.gallery figure{margin:0}
+.gallery img{display:block;width:100%;height:auto;border-radius:6px}
+.gallery a{display:block}
+.btnrow{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 28px}
+.btnlink{display:inline-block;padding:10px 16px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;font-size:15px}
+.btnlink.ghost{background:transparent;color:var(--link);border:1px solid var(--rule)}
+video{display:block;width:100%;height:auto;border-radius:6px;background:#000}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="../../">← Все отчёты</a>
+<h1>Транспортная развязка: картинки и видео</h1>
+<p class="meta">27 октября 2026 · материалы для презентации заказчику</p>
+<div class="btnrow"><a class="btnlink" href="./">Открыть 3D-модель</a></div>
+<p class="lead">Цвета очередей: <b style="color:#2e9e4f">I</b> — зелёный, <b style="color:#e5701a">II</b> — оранжевый, <b style="color:#c99a00">III</b> — жёлтый, <b style="color:#2a8ad8">IV</b> — голубой. Концептуальная визуализация, геометрия построена по эскизу и ориентировочна.</p>
+<!--VIDEO-->
+<h2>Изображения</h2>
+<div class="gallery">
+<figure><a href="img/01_obshiy-vid.jpg"><img src="img/01_obshiy-vid.jpg" alt="Общий вид развязки, все четыре очереди" loading="lazy" width="1920" height="1080"></a><figcaption>Общий вид развязки, все четыре очереди · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/02_petlevoy-sezd.jpg"><img src="img/02_petlevoy-sezd.jpg" alt="Петлевой съезд II очереди в верхнем уровне" loading="lazy" width="1920" height="1080"></a><figcaption>Петлевой съезд II очереди в верхнем уровне · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/03_vdol-dorogi.jpg"><img src="img/03_vdol-dorogi.jpg" alt="Вид вдоль основной дороги" loading="lazy" width="1920" height="1080"></a><figcaption>Вид вдоль основной дороги · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/04_so-storony-sezdov.jpg"><img src="img/04_so-storony-sezdov.jpg" alt="Вид со стороны съездов" loading="lazy" width="1920" height="1080"></a><figcaption>Вид со стороны съездов · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/05_nad-zheleznoy-dorogoy.jpg"><img src="img/05_nad-zheleznoy-dorogoy.jpg" alt="Пересечение с железной дорогой, канавой и рекой" loading="lazy" width="1920" height="1080"></a><figcaption>Пересечение с железной дорогой, канавой и рекой · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/06_plan.jpg"><img src="img/06_plan.jpg" alt="План развязки" loading="lazy" width="1920" height="1080"></a><figcaption>План развязки · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/07_realistichnyy-vid.jpg"><img src="img/07_realistichnyy-vid.jpg" alt="Реалистичный вид без цветовой разметки очередей" loading="lazy" width="1920" height="1080"></a><figcaption>Реалистичный вид без цветовой разметки очередей · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/13_ocheredi-2x2.jpg"><img src="img/13_ocheredi-2x2.jpg" alt="Очередность строительства: I → I–IV на одном листе" loading="lazy" width="1920" height="1080"></a><figcaption>Очередность строительства: I → I–IV на одном листе · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/08_etap-0_sushchestvuyushchee.jpg"><img src="img/08_etap-0_sushchestvuyushchee.jpg" alt="Этап 0. Существующее положение" loading="lazy" width="1920" height="1080"></a><figcaption>Этап 0. Существующее положение · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/09_etap-1.jpg"><img src="img/09_etap-1.jpg" alt="Этап 1. I очередь" loading="lazy" width="1920" height="1080"></a><figcaption>Этап 1. I очередь · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/10_etap-2.jpg"><img src="img/10_etap-2.jpg" alt="Этап 2. I–II очереди" loading="lazy" width="1920" height="1080"></a><figcaption>Этап 2. I–II очереди · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/11_etap-3.jpg"><img src="img/11_etap-3.jpg" alt="Этап 3. I–III очереди" loading="lazy" width="1920" height="1080"></a><figcaption>Этап 3. I–III очереди · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+<figure><a href="img/12_etap-4.jpg"><img src="img/12_etap-4.jpg" alt="Этап 4. I–IV очереди, полное развитие" loading="lazy" width="1920" height="1080"></a><figcaption>Этап 4. I–IV очереди, полное развитие · 1920×1080, нажмите, чтобы открыть в полном размере</figcaption></figure>
+</div>
+</main>
+</body>
+</html>
