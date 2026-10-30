@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Колеровка — прототип интерфейса</title>
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="proto-banner" id="protoBanner">
+  <span>Демонстрационный прототип интерфейса программы колеровки. Всё кликабельно; данные — примерные, для оценки внешнего вида и удобства. Замечания и пожелания приветствуются.</span>
+  <button type="button" id="protoClose" aria-label="скрыть">×</button>
+</div>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <span class="brand-name">Колеровка</span>
+  </div>
+  <nav class="nav" id="nav">
+    <button data-view="tint" class="active">Колеровка</button>
+    <button data-view="history">История</button>
+    <button data-view="dispenser">Дозатор</button>
+    <button data-view="stats">Статистика</button>
+    <button data-view="refs">Справочники</button>
+    <button data-view="settings">Настройки</button>
+  </nav>
+  <button class="demo-pill" id="demoPill" hidden></button>
+  <div class="db-badge" id="dbBadge"></div>
+</header>
+
+<main>
+  <!-- ================= КОЛЕРОВКА ================= -->
+  <section class="view active" id="view-tint">
+    <div class="tint-grid">
+      <div class="panel products">
+        <div class="panel-head">
+          <h2>Продукт</h2>
+        </div>
+        <div class="search-wrap">
+          <input id="productSearch" type="search" placeholder="Найти продукт" autocomplete="off">
+        </div>
+        <div class="product-list" id="productList"></div>
+      </div>
+
+      <div class="panel colours">
+        <div class="panel-head">
+          <h2>Цвет</h2>
+          <span class="muted" id="colourCount"></span>
+        </div>
+        <div class="colour-filters">
+          <input id="colourSearch" type="search" placeholder="Код или название: RAL 3020, S 1050-Y90R, TVT 436L, #C8A27A" autocomplete="off">
+          <select id="cardSelect"><option value="0">Все вееры</option></select>
+        </div>
+        <div class="colour-grid" id="colourGrid"></div>
+      </div>
+
+      <div class="panel recipe" id="recipePanel">
+        <div class="recipe-empty" id="recipeEmpty">
+          <div class="empty-swatches" aria-hidden="true"><i></i><i></i><i></i></div>
+          <p><b>Выберите продукт и цвет</b></p>
+          <p class="muted">Рецепт рассчитается под выбранную тару автоматически.</p>
+        </div>
+        <div class="recipe-body" id="recipeBody" hidden>
+          <div class="hero" id="hero">
+            <div class="hero-code" id="heroCode"></div>
+            <div class="hero-name" id="heroName"></div>
+            <div class="hero-cards" id="heroCards"></div>
+          </div>
+          <div class="recipe-scroll">
+            <div class="rp-row rp-product">
+              <div><span class="lbl">Продукт</span><b id="rpProduct"></b></div>
+              <div class="base-chip" id="rpBase"></div>
+            </div>
+            <div class="rp-block">
+              <span class="lbl">Тара</span>
+              <div class="chips" id="canChips"></div>
+              <div class="custom-can" id="customRow" hidden>
+                <input id="customAmt" type="number" min="1" step="10" placeholder="200">
+                <select id="customUnit"><option value="ml">мл</option><option value="g">г базы</option></select>
+                <span class="muted small">объём или вес базы</span>
+              </div>
+            </div>
+            <div class="rp-row rp-controls">
+              <label class="ctl"><span class="lbl">Количество</span>
+                <span class="stepper"><button type="button" data-step="-1" aria-label="меньше">−</button><input id="qty" type="number" min="1" value="1"><button type="button" data-step="1" aria-label="больше">+</button></span>
+              </label>
+              <label class="ctl"><span class="lbl">Насыщенность, %</span>
+                <input id="strength" type="number" min="1" max="300" step="5" value="100">
+              </label>
+            </div>
+            <div class="msg" id="rpMsg" hidden></div>
+            <table class="recipe-table" id="recipeTable">
+              <thead><tr><th>Паста</th><th class="num" id="thG">г</th><th class="num" id="thMl">мл</th><th class="num cost-col">Стоимость</th></tr></thead>
+              <tbody></tbody>
+              <tfoot></tfoot>
+            </table>
+            <div class="fill" id="fillBox">
+              <div class="fill-bar"><span id="fillVal"></span><i id="fillMax"></i></div>
+              <div class="fill-text" id="fillText"></div>
+            </div>
+            <div class="money" id="moneyBox"></div>
+            <div class="rp-row rp-client">
+              <input id="customer" placeholder="Клиент / телефон (необязательно)">
+              <input id="comment" placeholder="Комментарий">
+            </div>
+          </div>
+          <div class="rp-actions">
+            <button class="btn primary" id="btnDispense">Отправить на дозатор</button>
+            <div class="rp-actions-row">
+              <button class="btn" id="btnSavePrint">Записать + этикетка</button>
+              <button class="btn" id="btnSave">Только записать</button>
+            </div>
+            <div class="rp-actions-row">
+              <button class="btn" id="btnPrint">Печать</button>
+              <button class="btn" id="btnDispenseManual" hidden>Записать без дозатора</button>
+            </div>
+            <div class="dispenser-note" id="dispenserNote"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ИСТОРИЯ ================= -->
+  <section class="view" id="view-history">
+    <div class="page">
+      <div class="page-head">
+        <h1>История колеровок</h1>
+        <div class="filters">
+          <label>с <input type="date" id="hFrom"></label>
+          <label>по <input type="date" id="hTo"></label>
+          <input type="search" id="hSearch" placeholder="Цвет, продукт, клиент">
+        </div>
+      </div>
+      <div class="history-grid">
+        <div class="table-wrap">
+          <table class="data" id="historyTable">
+            <thead><tr><th>№</th><th>Дата</th><th>Цвет</th><th>Продукт</th><th>Тара</th><th class="num">Паста, мл</th><th class="num">Сумма</th><th>Клиент</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <div class="empty-note" id="historyEmpty" hidden>Записей пока нет. Колеровки появятся здесь после кнопки «Записать».</div>
+        </div>
+        <aside class="order-detail" id="orderDetail" hidden></aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ДОЗАТОР ================= -->
+  <section class="view" id="view-dispenser">
+    <div class="page">
+      <div class="page-head">
+        <h1>Дозатор</h1>
+        <div class="disp-head-right">
+          <button class="btn" id="btnTestDisp2">Проверить связь</button>
+          <button class="btn" id="btnDispLog">Журнал обмена</button>
+          <div class="disp-status" id="dispStatus"></div>
+        </div>
+      </div>
+      <div class="test-result" id="dispTestResultPage"></div>
+      <div class="disp-toolbar">
+        <div class="seg" id="maintainBar">
+          <button data-m="stir">Перемешать всё</button>
+          <button data-m="purge">Прокачать</button>
+          <button data-m="backflow">Возврат</button>
+        </div>
+        <div class="grow"></div>
+        <button class="btn" id="btnImportMachine">Загрузить канистры с машины</button>
+        <button class="btn" id="btnAutofill">Заполнить канистры по пастам</button>
+        <button class="btn primary" id="btnSaveCanisters" hidden>Сохранить расстановку</button>
+      </div>
+      <p class="muted small" id="dispHint">Расставьте пасты по позициям канистр, как в вашей машине, и задайте уровни. Эти данные используются при отправке рецепта на дозатор и для предупреждений о нехватке пасты.</p>
+      <div class="canister-grid" id="canisterGrid"></div>
+    </div>
+  </section>
+
+  <!-- ================= СТАТИСТИКА ================= -->
+  <section class="view" id="view-stats">
+    <div class="page">
+      <div class="page-head">
+        <h1>Статистика</h1>
+        <div class="filters">
+          <div class="seg" id="statPeriod">
+            <button data-p="today">Сегодня</button><button data-p="week">7 дней</button><button data-p="month" class="active">30 дней</button><button data-p="year">Год</button><button data-p="all">Всё время</button>
+          </div>
+        </div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="stats-grid">
+        <div class="card"><h3>Расход паст</h3><div id="statCnt"></div></div>
+        <div class="card"><h3>Популярные цвета</h3><div id="statColours"></div></div>
+        <div class="card"><h3>Продукты</h3><div id="statProducts"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= СПРАВОЧНИКИ ================= -->
+  <section class="view" id="view-refs">
+    <div class="page">
+      <div class="page-head">
+        <h1>Справочники</h1>
+        <div class="seg" id="refTabs">
+          <button data-t="cnt" class="active">Пасты и цены</button><button data-t="prod">Продукты, базы, тара</button><button data-t="cards">Вееры</button>
+        </div>
+      </div>
+      <div id="refBody"></div>
+    </div>
+  </section>
+
+  <!-- ================= НАСТРОЙКИ ================= -->
+  <section class="view" id="view-settings">
+    <div class="page narrow">
+      <h1>Настройки</h1>
+      <div class="card" id="licCard" hidden>
+        <h3>Лицензия</h3>
+        <div id="licInfo" class="db-info"></div>
+        <p class="muted small">Код установки этого компьютера: <b id="licCode2"></b></p>
+        <div class="import-row">
+          <textarea id="licKey2" placeholder="Вставьте ключ лицензии для продления/активации" style="flex:1;min-height:60px"></textarea>
+        </div>
+        <button class="btn primary" id="licActivate2">Активировать ключ</button>
+        <span class="saved" id="licSaved2" hidden>Активировано</span>
+        <span class="lic-msg" id="licMsg2"></span>
+      </div>
+      <div class="card">
+        <h3>Точка продаж</h3>
+        <div class="form">
+          <label>Название (печатается на этикетке)<input id="sShop" placeholder="Например: Магазин красок «Радуга»"></label>
+          <label>Контакты на этикетке<input id="sInfo" placeholder="Адрес, телефон"></label>
+          <label>Наценка на колеровку, %<input id="sMarkup" type="number" step="1" min="0"></label>
+          <label>Основная единица в рецепте
+            <select id="sUnit"><option value="g">граммы</option><option value="ml">миллилитры</option></select>
+          </label>
+          <label>Ширина этикетки
+            <select id="sLabel"><option value="58">58 мм (термопринтер)</option><option value="80">80 мм (термопринтер)</option><option value="a6">A6 (обычный принтер)</option></select>
+          </label>
+          <label class="check"><input type="checkbox" id="sShowCost"> Показывать стоимость в рецепте</label>
+        </div>
+        <button class="btn primary" id="btnSaveSettings">Сохранить</button>
+        <span class="saved" id="settingsSaved" hidden>Сохранено</span>
+      </div>
+
+      <div class="card" id="dbCard">
+        <h3>База рецептур</h3>
+        <div id="dbInfo" class="db-info"></div>
+        <p class="muted">Загрузите установщик базы рецептур от производителя (например, <b>Arcobaleno.exe</b>). Программа сама распакует его — запускать установщик не нужно. История колеровок и ваши цены при обновлении сохраняются.</p>
+        <div class="import-row">
+          <label class="btn file-btn">Выбрать файл…<input type="file" id="importFile" accept=".exe,.bz2,.tmp"></label>
+          <span class="muted">или путь к файлу:</span>
+          <input id="importPath" placeholder="C:\Users\...\Downloads\Arcobaleno.exe">
+          <button class="btn" id="btnImportPath">Загрузить</button>
+        </div>
+        <div class="progress" id="importProgress" hidden>
+          <div class="progress-bar"><span id="importBar"></span></div>
+          <div class="progress-text" id="importText"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Дозатор</h3>
+        <div class="form">
+          <label>Режим дозатора
+            <select id="sDispBackend">
+              <option value="sim">Симулятор (отладка без машины)</option>
+              <option value="corob">Машина Corob (E4G/E5G)</option>
+              <option value="none">Выключен (дозирование вручную)</option>
+            </select>
+          </label>
+          <label>Адрес контроллера Corob<input id="sCorobAddr" placeholder="127.0.0.1:5000 (E4G) или 127.0.0.1:9333 (E5G)"></label>
+        </div>
+        <p class="muted small">Ваша машина — <b>Corob</b> (контроллер E4G/E5G, режим Secondary). Свой драйвер подключается к контроллеру напрямую по TCP, без фирменного SDK. Протокол E4G/E5G закрытый — его нужно снять утилитой <b>capture.exe</b> на компьютере с машиной; после этого включу дозирование. Пока используйте «Симулятор» для отладки расстановки канистр и всего процесса.</p>
+        <div class="disp-settings-actions">
+          <button class="btn primary" id="btnSaveDispenser">Сохранить</button>
+          <button class="btn" id="btnTestDispenser">Проверить подключение</button>
+          <span class="saved" id="dispSaved" hidden>Сохранено</span>
+          <span class="test-result" id="dispTestResult"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Первый запуск: базы нет -->
+<div class="welcome" id="welcome" hidden>
+  <div class="welcome-card">
+    <span class="brand-mark big" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <h1>Добро пожаловать в «Колеровку»</h1>
+    <p>Для начала работы загрузите базу рецептур. Подойдёт установщик базы от производителя — например, <b>Arcobaleno.exe</b>.</p>
+    <div class="import-row">
+      <label class="btn primary file-btn">Выбрать Arcobaleno.exe…<input type="file" id="importFile2" accept=".exe,.bz2,.tmp"></label>
+    </div>
+    <div class="import-row">
+      <input id="importPath2" placeholder="или вставьте путь: C:\...\Arcobaleno.exe">
+      <button class="btn" id="btnImportPath2">Загрузить</button>
+    </div>
+    <div class="progress" id="importProgress2" hidden>
+      <div class="progress-bar"><span id="importBar2"></span></div>
+      <div class="progress-text" id="importText2"></div>
+    </div>
+    <p class="muted small">Импорт занимает 2–4 минуты. Установщик не запускается — программа только читает из него данные.</p>
+  </div>
+</div>
+
+<!-- Окно дозирования -->
+<div class="modal" id="dispModal" hidden>
+  <div class="modal-card">
+    <div class="hero" id="dispHero"><div class="hero-code"></div><div class="hero-name"></div><div class="hero-cards"></div></div>
+    <div class="disp-body">
+      <div class="disp-prog"><div class="disp-prog-bar"><span id="dispBar"></span></div><div class="disp-prog-text" id="dispMsg"></div></div>
+      <table class="recipe-table" id="dispTable"><thead><tr><th>Паста</th><th>Поз.</th><th class="num">Выдано, мл</th><th class="num">Цель, мл</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="disp-actions">
+      <button class="btn danger" id="dispAbort">Прервать</button>
+      <button class="btn primary" id="dispClose" hidden>Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- Экран активации лицензии -->
+<div class="modal" id="logModal" hidden>
+  <div class="modal-card log-card">
+    <div class="log-head">
+      <h3>Журнал обмена с машиной</h3>
+      <p class="muted small">Здесь записаны все запросы к дозатору и ответы от него. Нажмите «Сохранить в файл», скопируйте <b>corob.log</b> на флешку и пришлите мне — по нему видно точную причину ошибки. Файл также лежит рядом с программой: <code>data\corob.log</code></p>
+    </div>
+    <pre class="log-text" id="logText">Загрузка…</pre>
+    <div class="disp-actions">
+      <button class="btn" id="logRefresh">Обновить</button>
+      <button class="btn" id="logClear">Очистить</button>
+      <button class="btn" id="logSave">Сохранить в файл</button>
+      <button class="btn" id="logCopy">Скопировать</button>
+      <button class="btn primary" id="logClose">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<div class="blocker" id="licWall" hidden>
+  <div class="blocker-card">
+    <span class="brand-mark big" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <h1 id="licTitle">Активация программы</h1>
+    <p id="licReason" class="muted"></p>
+    <div class="lic-code">Код установки: <b id="licCode"></b> <button class="btn" id="licCopy">Копировать</button></div>
+    <p class="muted small">Отправьте этот код продавцу — в ответ получите ключ лицензии и вставьте его ниже.</p>
+    <textarea id="licKey" placeholder="Вставьте ключ лицензии сюда"></textarea>
+    <button class="btn primary" id="licActivate">Активировать</button>
+    <p class="lic-msg" id="licMsg"></p>
+    <p class="blocker-contacts" id="licContacts"></p>
+    <p class="muted small">Справочники и история остаются доступны для просмотра — закройте это окно клавишей Esc.</p>
+  </div>
+</div>
+
+<!-- Экран окончания пробного периода -->
+<div class="blocker" id="blocker" hidden>
+  <div class="blocker-card">
+    <span class="brand-mark big" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <h1>Пробный период закончился</h1>
+    <p>Спасибо, что попробовали «Колеровку». Чтобы продолжить колеровать и печатать этикетки, приобретите полную версию.</p>
+    <p class="blocker-contacts" id="blockerContacts"></p>
+    <p class="muted small" id="blockerCode"></p>
+    <p class="muted small">История колеровок и справочники остаются доступны для просмотра — закройте это окно клавишей Esc.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<iframe id="printFrame" title="Печать" aria-hidden="true"></iframe>
+<script src="mock.js"></script>
+<script src="app.js"></script>
+<script>
+  (function () {
+    var b = document.getElementById('protoBanner'), c = document.getElementById('protoClose');
+    if (c) c.addEventListener('click', function () { b.style.display = 'none'; });
+  })();
+</script>
+</body>
+</html>
