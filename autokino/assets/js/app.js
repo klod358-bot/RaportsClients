@@ -292,9 +292,51 @@
     dock.classList.toggle('is-visible', show);
   }
 
+  /* ===================== Ссылки и прокрутка ===================== */
+  /*
+   * 1. Ссылка на сайт с хвостом #order (так выглядел адрес после нажатия «Заказать»)
+   *    открывает «Примеры работ».
+   * 2. Кнопки внутри страницы плавно прокручивают к разделу, не дописывая #… в адрес,
+   *    поэтому скопированная из браузера ссылка всегда чистая.
+   * 3. Браузер не возвращает страницу туда, где её листали в прошлый раз.
+   */
+  // Прокручиваем к заголовку раздела, а не к его верхнему отступу — так в экран помещается больше
+  // (позицию считаем без учёта анимации появления, иначе заголовок уезжает под шапку)
+  function sectionAnchor(el) { return el.querySelector('.section-head') || el; }
+  function absTop(el) { var y = 0; while (el) { y += el.offsetTop; el = el.offsetParent; } return y; }
+  function scrollToSection(el, smooth) {
+    var pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    window.scrollTo({ top: Math.max(0, absTop(sectionAnchor(el)) - pad), behavior: smooth && !reduceMotion ? 'smooth' : 'auto' });
+  }
+  function initAnchors() {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    var landing = location.hash === '#order' || location.hash === '#examples';
+    if (landing) {
+      try { history.replaceState(null, '', location.pathname + location.search + '#examples'); } catch (e) { /* noop */ }
+      var go = function () { var ex = $('#examples'); if (ex) scrollToSection(ex, false); };
+      go();
+      window.addEventListener('load', function () { setTimeout(go, 0); }, { once: true });
+    }
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a[href^="#"]');
+      if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      var id = a.getAttribute('href').slice(1);
+      var target = id ? document.getElementById(id) : document.getElementById('top');
+      if (!target) return;
+      e.preventDefault();
+      scrollToSection(target, true);
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (err) { /* noop */ }
+      if (a.classList.contains('skip')) {
+        target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+      }
+    });
+  }
+
   /* ===================== Старт ===================== */
   function init() {
     applyConfig();
+    initAnchors();
     initHero();
     initTopbar();
     initReveal();
