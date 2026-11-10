@@ -17,7 +17,7 @@
 <link rel="preload" as="image" href="assets/img/hero-vertical.jpg" media="(orientation: portrait)">
 <link rel="preload" href="assets/fonts/sofia-sans-xc-900.woff" as="font" type="font/woff" crossorigin>
 <link rel="preload" href="assets/fonts/sofia-sans-400.woff" as="font" type="font/woff" crossorigin>
-<link rel="stylesheet" href="assets/css/site.css?v=20261110-3">
+<link rel="stylesheet" href="assets/css/site.css?v=20261110-6">
 <script>document.write('<script src="config.js?t=' + Date.now() + '"><\/script>')</script>
 </head>
 <body>
@@ -103,7 +103,7 @@
         <a class="btn btn-red btn-lg" href="#order">Заказать видео</a>
         <a class="btn btn-ghost btn-lg" href="#examples">Смотреть примеры</a>
       </div>
-      <p class="hero-note"><span data-price-text>10 000 ₸</span> за ролик. Оплата переводом, заявка прямо на сайте.</p>
+      <p class="hero-note"><span data-price-text>10 000 ₸</span> за ролик. Оплата переводом, заказ через WhatsApp.</p>
     </div>
   </section>
 
@@ -132,8 +132,8 @@
         </li>
         <li class="step">
           <span class="step-num" aria-hidden="true">2</span>
-          <h3>Загружаешь фотографии своего автомобиля и себя</h3>
-          <p>Машину — с четырёх сторон, себя — по пояс или в полный рост. Чек прикрепляешь в той же форме.</p>
+          <h3>Присылаешь фотографии своего автомобиля и себя</h3>
+          <p>Машину — с четырёх сторон, себя — по пояс или в полный рост. Вместе с чеком — нам в WhatsApp.</p>
         </li>
         <li class="step">
           <span class="step-num" aria-hidden="true">3</span>
@@ -175,173 +175,75 @@
     </div>
   </section>
 
-  <!-- ЗАКАЗ -->
+  <!-- КАК ЗАКАЗАТЬ -->
   <section class="section order" id="order" aria-labelledby="order-title">
-    <div class="wrap order-layout">
-      <aside class="order-aside">
-        <div class="order-aside-inner">
-          <h2 id="order-title">Оформление заказа</h2>
-          <p class="order-intro">Займёт пару минут. Подготовьте фото машины с четырёх сторон, своё фото и чек о переводе.</p>
-          <ol class="progress" id="progressList" aria-label="Что осталось заполнить">
-            <li data-step="client">О вас</li>
-            <li data-step="car">Автомобиль</li>
-            <li data-step="carPhotos">Фото автомобиля</li>
-            <li data-step="person">Ваше фото</li>
-            <li data-step="story">Пожелания к видео</li>
-            <li data-step="payment">Оплата и чек</li>
-          </ol>
-          <div class="aside-total">
-            <span>Сумма к оплате</span>
-            <strong data-total>10 000 ₸</strong>
-          </div>
-          <button type="submit" form="orderForm" class="btn btn-red btn-lg btn-block aside-submit">Отправить заказ</button>
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <h2 id="order-title">Заказать видео</h2>
+        <p>Заказ принимаем в WhatsApp. Подготовьте всё по списку, оплатите и отправьте нам одним сообщением — ответим и подтвердим заказ.</p>
+      </div>
+      <div class="order-layout">
+        <div class="need" data-reveal>
+          <h3 class="need-title">Что прислать</h3>
+          <section class="need-item" aria-labelledby="n-car">
+            <h4 id="n-car"><svg aria-hidden="true"><use href="#i-check"/></svg>Фото автомобиля с четырёх сторон</h4>
+            <p>Вся машина в кадре, днём или при хорошем свете, без людей перед машиной.</p>
+            <div class="shots">
+              <figure class="shot">
+                <div class="shot-frame"><span class="shot-label">Спереди</span><svg class="shot-guide" viewBox="0 0 240 112" aria-hidden="true"><use href="#car-front"/></svg></div>
+                <figcaption class="shot-hint">Напротив машины в 3–4 шагах: обе фары и номер в кадре.</figcaption>
+              </figure>
+              <figure class="shot">
+                <div class="shot-frame"><span class="shot-label">Сзади</span><svg class="shot-guide" viewBox="0 0 240 112" aria-hidden="true"><use href="#car-rear"/></svg></div>
+                <figcaption class="shot-hint">Прямо за машиной: видны оба фонаря и номер.</figcaption>
+              </figure>
+              <figure class="shot">
+                <div class="shot-frame"><span class="shot-label">Слева</span><svg class="shot-guide" viewBox="0 0 240 112" aria-hidden="true"><use href="#car-side"/></svg></div>
+                <figcaption class="shot-hint">Машина целиком, от бампера до бампера, камера на уровне ручек дверей.</figcaption>
+              </figure>
+              <figure class="shot">
+                <div class="shot-frame"><span class="shot-label">Справа</span><svg class="shot-guide flip" viewBox="0 0 240 112" aria-hidden="true"><use href="#car-side"/></svg></div>
+                <figcaption class="shot-hint">Так же с правой стороны: вся машина в кадре.</figcaption>
+              </figure>
+            </div>
+          </section>
+          <section class="need-item" aria-labelledby="n-person">
+            <h4 id="n-person"><svg aria-hidden="true"><use href="#i-check"/></svg>Ваше фото</h4>
+            <p>Желательно в полный рост или по пояс, с хорошо видимым лицом. Без солнцезащитных очков и масок. Можно несколько фото.</p>
+          </section>
+          <section class="need-item" aria-labelledby="n-data">
+            <h4 id="n-data"><svg aria-hidden="true"><use href="#i-check"/></svg>Имя и данные автомобиля</h4>
+            <p>Как к вам обращаться, марка, модель, год выпуска и цвет машины.</p>
+          </section>
+          <section class="need-item" aria-labelledby="n-story">
+            <h4 id="n-story"><svg aria-hidden="true"><use href="#i-check"/></svg><span>Пожелания к сюжету <span class="optional">необязательно</span></span></h4>
+            <p>Ночной город, погоня, дрифт, закат, горы — или опишите своё. Если не знаете, что выбрать, предложим сами.</p>
+          </section>
+          <section class="need-item" aria-labelledby="n-receipt">
+            <h4 id="n-receipt"><svg aria-hidden="true"><use href="#i-check"/></svg>Чек об оплате</h4>
+            <p>Скриншот или PDF перевода из банковского приложения.</p>
+          </section>
         </div>
-      </aside>
 
-      <form class="order-form" id="orderForm" novalidate autocomplete="on">
-        <!-- 1. О вас -->
-        <section class="panel" id="sec-client" aria-labelledby="h-client" data-step-panel="client">
-          <h3 class="panel-head" id="h-client"><span class="panel-num">1</span>О вас</h3>
-          <div class="fields two">
-            <div class="field">
-              <label for="f-name">Имя</label>
-              <input id="f-name" name="name" type="text" autocomplete="name" required maxlength="80" placeholder="Как к вам обращаться">
-              <p class="field-error" id="e-name"></p>
-            </div>
-            <div class="field">
-              <label for="f-phone">Номер телефона / WhatsApp</label>
-              <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required maxlength="22" placeholder="+7 7__ ___ __ __">
-              <p class="field-error" id="e-phone"></p>
-            </div>
-            <div class="field span-2">
-              <label for="f-instagram">Никнейм Instagram <span class="optional">необязательно</span></label>
-              <div class="input-prefix"><span aria-hidden="true">@</span><input id="f-instagram" name="instagram" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="40" placeholder="ваш.ник"></div>
-            </div>
-          </div>
-        </section>
-
-        <!-- 2. Автомобиль -->
-        <section class="panel" id="sec-car" aria-labelledby="h-car" data-step-panel="car">
-          <h3 class="panel-head" id="h-car"><span class="panel-num">2</span>Автомобиль</h3>
-          <div class="fields two">
-            <div class="field">
-              <label for="f-brand">Марка автомобиля</label>
-              <input id="f-brand" name="brand" type="text" list="brands" required maxlength="40" placeholder="Например, Mercedes-Benz" autocomplete="off">
-              <datalist id="brands"></datalist>
-              <p class="field-error" id="e-brand"></p>
-            </div>
-            <div class="field">
-              <label for="f-model">Модель</label>
-              <input id="f-model" name="model" type="text" required maxlength="40" placeholder="Например, E-класс" autocomplete="off">
-              <p class="field-error" id="e-model"></p>
-            </div>
-            <div class="field">
-              <label for="f-year">Год выпуска</label>
-              <input id="f-year" name="year" type="text" inputmode="numeric" pattern="[0-9]*" required maxlength="4" placeholder="Например, 2021" autocomplete="off">
-              <p class="field-error" id="e-year"></p>
-            </div>
-            <div class="field">
-              <label for="f-color">Цвет автомобиля</label>
-              <input id="f-color" name="color" type="text" required maxlength="40" placeholder="Например, красный" autocomplete="off">
-              <div class="swatches" id="swatches" aria-label="Быстрый выбор цвета"></div>
-              <p class="field-error" id="e-color"></p>
-            </div>
-          </div>
-        </section>
-
-        <!-- 3. Фото автомобиля -->
-        <section class="panel" id="sec-carPhotos" aria-labelledby="h-carPhotos" data-step-panel="carPhotos">
-          <h3 class="panel-head" id="h-carPhotos"><span class="panel-num">3</span>Фото автомобиля</h3>
-          <p class="panel-lead">Четыре ракурса: спереди, сзади, слева и справа. Вся машина в кадре, снимайте днём или при хорошем свете, без людей перед машиной.</p>
-          <div class="shots" id="carShots"></div>
-        </section>
-
-        <!-- 4. Ваше фото -->
-        <section class="panel" id="sec-person" aria-labelledby="h-person" data-step-panel="person">
-          <h3 class="panel-head" id="h-person"><span class="panel-num">4</span>Загрузите своё фото</h3>
-          <p class="panel-lead">Желательно фотография в полный рост или по пояс, с хорошо видимым лицом. Без солнцезащитных очков и масок. Можно несколько фото — до <span data-cfg="upload.maxPersonPhotos">5</span>.</p>
-          <div class="people" id="people">
-            <label class="people-add" id="peopleAdd">
-              <input type="file" accept="image/*" multiple class="sr-only" id="f-person" aria-describedby="e-person">
-              <svg aria-hidden="true"><use href="#i-person"/></svg>
-              <span class="people-add-text">Загрузить фото</span>
-            </label>
-          </div>
-          <p class="field-error" id="e-person"></p>
-        </section>
-
-        <!-- 5. Пожелания -->
-        <section class="panel" id="sec-story" aria-labelledby="h-story" data-step-panel="story">
-          <h3 class="panel-head" id="h-story"><span class="panel-num">5</span>Пожелания к видео</h3>
-          <div class="field">
-            <span class="label" id="l-moods">Атмосфера <span class="optional">можно выбрать несколько</span></span>
-            <div class="chips" id="moods" role="group" aria-labelledby="l-moods"></div>
-          </div>
-          <div class="field">
-            <label for="f-story">Опишите желаемый сюжет <span class="optional">необязательно</span></label>
-            <textarea id="f-story" name="story" rows="4" maxlength="2000" placeholder="Например: ночной город, я выхожу из машины, камера облетает её по кругу. Если не знаете, что выбрать, — оставьте пустым, предложим сами."></textarea>
-          </div>
-          <div class="field">
-            <label for="f-wishes">Дополнительные пожелания <span class="optional">необязательно</span></label>
-            <textarea id="f-wishes" name="wishes" rows="3" maxlength="1500" placeholder="Музыка, надпись в конце, скрыть номер, к какой дате нужен ролик"></textarea>
-          </div>
-        </section>
-
-        <!-- 6. Оплата -->
-        <section class="panel panel-pay" id="sec-payment" aria-labelledby="h-payment" data-step-panel="payment">
-          <h3 class="panel-head" id="h-payment"><span class="panel-num">6</span>Оплата</h3>
-          <p class="pay-lead">Оплатите заказ переводом на указанный номер.</p>
-          <dl class="pay">
-            <div class="pay-row pay-phone">
-              <dt>Номер телефона для перевода</dt>
-              <dd><span class="pay-number" data-cfg="payment.phone">+7 701 555 7224</span>
-                <button type="button" class="btn btn-ghost btn-sm" id="copyPhone"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Скопировать номер</span></button></dd>
-            </div>
-            <div class="pay-row" data-if="payment.recipient" hidden><dt>Получатель</dt><dd data-cfg="payment.recipient"></dd></div>
-            <div class="pay-row" data-if="payment.bank" hidden><dt>Банк</dt><dd data-cfg="payment.bank"></dd></div>
-            <div class="pay-row">
-              <dt id="l-qty">Количество роликов</dt>
-              <dd>
-                <div class="stepper" role="group" aria-labelledby="l-qty">
-                  <button type="button" class="stepper-btn" data-qty="-1" aria-label="Меньше">−</button>
-                  <output id="qty" aria-live="polite">1</output>
-                  <button type="button" class="stepper-btn" data-qty="1" aria-label="Больше">+</button>
-                </div>
-              </dd>
-            </div>
-            <div class="pay-row pay-total"><dt>Сумма к оплате</dt><dd data-total>10 000 ₸</dd></div>
-          </dl>
-
-          <div class="receipt" id="receipt">
-            <div class="receipt-head">
-              <h4 id="l-receipt">Прикрепите чек об оплате</h4>
-              <p class="hint">Скриншот или PDF из банковского приложения. Форматы: JPG, PNG, PDF, до <span data-cfg="upload.maxReceiptMB">10</span> МБ.</p>
-            </div>
-            <div class="receipt-body">
-              <div class="receipt-preview" id="receiptPreview" hidden></div>
-              <div class="receipt-actions">
-                <label class="btn btn-ghost" id="receiptPick">
-                  <input type="file" id="f-receipt" class="sr-only" accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf" aria-labelledby="l-receipt" aria-describedby="e-receipt">
-                  <svg aria-hidden="true"><use href="#i-doc"/></svg><span>Загрузить чек</span>
-                </label>
-                <button type="button" class="link-btn" id="receiptRemove" hidden>Удалить</button>
+        <aside class="pay-card" aria-labelledby="pay-title" data-reveal>
+          <div class="pay-card-inner">
+            <h3 id="pay-title">Оплата</h3>
+            <p class="pay-lead">Оплатите заказ переводом на указанный номер.</p>
+            <dl class="pay">
+              <div class="pay-row pay-phone">
+                <dt>Номер телефона для перевода</dt>
+                <dd><span class="pay-number" data-cfg="payment.phone">+7 701 555 7224</span>
+                  <button type="button" class="btn btn-ghost btn-sm" id="copyPhone"><svg aria-hidden="true"><use href="#i-copy"/></svg><span>Скопировать номер</span></button></dd>
               </div>
-            </div>
-            <p class="field-error" id="e-receipt"></p>
+              <div class="pay-row" data-if="payment.recipient" hidden><dt>Получатель</dt><dd data-cfg="payment.recipient"></dd></div>
+              <div class="pay-row" data-if="payment.bank" hidden><dt>Банк</dt><dd data-cfg="payment.bank"></dd></div>
+              <div class="pay-row pay-total"><dt>Сумма к оплате<span class="pay-per">за один ролик</span></dt><dd data-price-text>10 000 ₸</dd></div>
+            </dl>
+            <a class="btn btn-red btn-xl btn-block wa-btn" data-wa-order href="#" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-chat"/></svg><span>Написать в WhatsApp</span></a>
+            <p class="wa-note">Откроется чат с номером <span class="nowrap" data-cfg="contacts.whatsapp">+7 701 555 7224</span> и готовым сообщением. Допишите данные и прикрепите фото и чек.</p>
           </div>
-        </section>
-
-        <div class="final">
-          <label class="consent">
-            <input type="checkbox" id="f-consent" name="consent" required>
-            <span>Согласен на обработку персональных данных и использование загруженных фото для создания видео</span>
-          </label>
-          <p class="field-error" id="e-consent"></p>
-          <div class="hp" aria-hidden="true"><label>Не заполняйте это поле <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-          <button type="submit" class="btn btn-red btn-xl btn-block" id="submitBtn">Отправить заказ</button>
-          <p class="final-note">Перед отправкой покажем сводку заказа — можно будет всё проверить.</p>
-        </div>
-      </form>
+        </aside>
+      </div>
     </div>
   </section>
 </main>
@@ -366,7 +268,7 @@
 <div class="dock" id="dock" aria-hidden="true">
   <div class="dock-info">
     <span class="dock-label" id="dockLabel">Ролик с вашей машиной</span>
-    <strong class="dock-sum" data-total>10 000 ₸</strong>
+    <strong class="dock-sum" data-price-text>10 000 ₸</strong>
   </div>
   <a class="btn btn-red dock-btn" id="dockBtn" href="#order" tabindex="-1">Заказать видео</a>
 </div>
@@ -389,49 +291,14 @@
   </div>
   <div class="viewer-bottom">
     <div class="viewer-caption"><strong id="viewerTitle"></strong><span id="viewerNote"></span></div>
-    <button type="button" class="btn btn-red" id="viewerOrder">Хочу такое же</button>
+    <a class="btn btn-red" id="viewerOrder" href="#" target="_blank" rel="noopener">Хочу такое же</a>
   </div>
   <div class="viewer-progress" id="viewerProgress" role="slider" aria-label="Перемотка" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0"><span><i id="viewerBar"></i></span></div>
 </dialog>
 
-<!-- Сводка заказа -->
-<dialog class="sheet" id="summary" aria-labelledby="summaryTitle">
-  <div class="sheet-inner">
-    <div class="sheet-head">
-      <h2 id="summaryTitle">Проверьте заказ</h2>
-      <button type="button" class="icon-btn" data-close aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
-    </div>
-    <div class="sheet-body" id="summaryBody"></div>
-    <div class="sheet-status" id="sendStatus" hidden>
-      <div class="loader" aria-hidden="true"><span></span></div>
-      <p class="sheet-status-title" id="sendTitle">Отправляем заказ…</p>
-      <p class="sheet-status-text" id="sendText">Не закрывайте страницу.</p>
-    </div>
-    <div class="sheet-foot" id="summaryFoot">
-      <button type="button" class="btn btn-ghost" data-close>Изменить</button>
-      <button type="button" class="btn btn-red btn-lg" id="confirmSend">Подтвердить и отправить</button>
-    </div>
-  </div>
-</dialog>
-
-<!-- Заявка принята -->
-<div class="finale" id="finale" role="dialog" aria-modal="true" aria-labelledby="finaleTitle" hidden>
-  <div class="bar bar-top" aria-hidden="true"></div>
-  <div class="bar bar-bottom" aria-hidden="true"></div>
-  <div class="finale-inner">
-    <p class="finale-num" id="finaleNum"></p>
-    <h2 class="finale-title" id="finaleTitle" tabindex="-1">Заявка принята!</h2>
-    <p class="finale-text">Спасибо за заказ! Мы получили ваши фотографии и чек оплаты. Скоро свяжемся с вами для подтверждения заказа.</p>
-    <div class="finale-actions">
-      <a class="btn btn-red btn-lg" id="finaleWa" href="#" target="_blank" rel="noopener" hidden>Написать в WhatsApp</a>
-      <button type="button" class="btn btn-ghost btn-lg" id="finaleClose">Вернуться на сайт</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="assets/js/common.js?v=20261110-3"></script>
-<script src="assets/js/app.js?v=20261110-3"></script>
+<script src="assets/js/common.js?v=20261110-6"></script>
+<script src="assets/js/app.js?v=20261110-6"></script>
 </body>
 </html>
