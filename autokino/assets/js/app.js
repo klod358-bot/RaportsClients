@@ -1033,12 +1033,13 @@
     if (!summary.open && typeof summary.showModal === 'function') { summary.showModal(); lockScroll(); }
     setStatus('Отправляем заказ…', 'Загружаем фото и чек (' + AK.fmtBytes(totalBytes()) + '). Не закрывайте страницу — обычно это занимает до минуты.');
     var name = fields.name.value.trim();
+    var car = (fields.brand.value.trim() + ' ' + fields.model.value.trim()).trim();
     buildPayload().then(function (payload) {
       return AK.api('createOrder', payload, { timeout: 300000 });
     }).then(function (res) {
       state.sending = false;
       summary.close();
-      showFinale(res.orderId, name);
+      showFinale(res.orderId, name, car);
       resetForm();
     }, function (err) {
       state.sending = false;
@@ -1081,10 +1082,10 @@
     updateProgress();
   }
 
-  function showFinale(orderId, name) {
+  function showFinale(orderId, name, car) {
     var fin = $('#finale');
     $('#finaleNum').innerHTML = 'Номер заказа <b>' + esc(orderId || '') + '</b>';
-    var wa = AK.waLink(CFG.contacts && CFG.contacts.whatsapp, 'Здравствуйте! Я оформил(а) заказ ' + (orderId || '') + ' на сайте. Меня зовут ' + name + '.');
+    var wa = AK.waLink(CFG.contacts && CFG.contacts.whatsapp, 'Здравствуйте! Я оформил(а) заказ ' + (orderId || '') + ' на сайте' + (car ? ': ' + car : '') + '. Меня зовут ' + name + '.');
     var waBtn = $('#finaleWa');
     if (wa) { waBtn.href = wa; waBtn.hidden = false; }
     state.lastFocus = document.activeElement;
