@@ -781,7 +781,7 @@
     var v = (fields[name].value || '').trim();
     switch (name) {
       case 'name': return v.length >= 2 ? '' : 'Укажите имя';
-      case 'phone': return AK.phoneValid(v) ? '' : (v.length > 3 ? 'Проверьте номер: нужно 11 цифр, например +7 708 555 72 24' : 'Укажите номер телефона или WhatsApp');
+      case 'phone': return AK.phoneValid(v) ? '' : (v.length > 3 ? 'Проверьте номер: нужно 11 цифр, например +7 701 555 72 24' : 'Укажите номер телефона или WhatsApp');
       case 'brand': return v ? '' : 'Укажите марку';
       case 'model': return v ? '' : 'Укажите модель';
       case 'year': {

@@ -16,7 +16,7 @@
     return s + ' ' + (currency || CFG.currency || '₸');
   }
 
-  /* Маска номера: +7 708 555 72 24. Номера других стран (+996, +998…) не трогаем. */
+  /* Маска номера: +7 701 555 72 24. Номера других стран (+996, +998…) не трогаем. */
   function maskPhone(value) {
     var t = String(value == null ? '' : value).trim();
     if (/^\+[0-689]/.test(t)) return '+' + digits(t).slice(0, 15);
