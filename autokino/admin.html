@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#000000">
+<title>Заказы — АВТОКИНО</title>
+<link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/site.css">
+<link rel="stylesheet" href="assets/css/admin.css">
+<script src="config.js"></script>
+</head>
+<body class="admin">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4h-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3.5h7l4.5 4.5v12.5H7Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3.5V8h4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0-7.4 12.7L3.5 20.5l4.4-1.1A8.5 8.5 0 1 0 12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 9.2c.3 2.6 2.4 4.9 5.6 5.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<!-- Вход -->
+<main class="login" id="login" hidden>
+  <form class="login-card" id="loginForm" novalidate>
+    <p class="brand"><span class="rec" aria-hidden="true"></span><span data-cfg="brand">АВТОКИНО</span></p>
+    <h1>Заказы</h1>
+    <label for="password">Пароль администратора</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <p class="field-error" id="loginError" role="alert"></p>
+    <button class="btn btn-red btn-lg btn-block" type="submit" id="loginBtn">Войти</button>
+    <p class="login-note"><a href="./">Вернуться на сайт</a></p>
+  </form>
+</main>
+
+<!-- Панель -->
+<div class="app" id="app" hidden>
+  <header class="a-top">
+    <a class="brand" href="./" title="Открыть сайт"><span class="rec" aria-hidden="true"></span><span data-cfg="brand">АВТОКИНО</span></a>
+    <div class="a-top-actions">
+      <a class="btn btn-ghost btn-sm" id="sheetLink" href="#" target="_blank" rel="noopener" hidden>Таблица</a>
+      <a class="btn btn-ghost btn-sm" id="folderLink" href="#" target="_blank" rel="noopener" hidden>Папка Drive</a>
+      <button class="icon-btn" id="refreshBtn" type="button" aria-label="Обновить список"><svg aria-hidden="true"><use href="#i-refresh"/></svg></button>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn" type="button">Выйти</button>
+    </div>
+  </header>
+
+  <main class="a-main">
+    <div class="a-head">
+      <h1>Заказы</h1>
+      <p class="a-updated" id="updated" aria-live="polite"></p>
+    </div>
+    <div class="a-tools">
+      <div class="a-filters" id="filters" role="group" aria-label="Фильтр по статусу"></div>
+      <label class="a-search">
+        <span class="sr-only">Поиск</span>
+        <svg aria-hidden="true"><use href="#i-search"/></svg>
+        <input type="search" id="search" placeholder="Номер, имя, телефон, машина">
+      </label>
+    </div>
+    <div class="a-list" id="list" aria-live="polite"></div>
+  </main>
+</div>
+
+<!-- Карточка заказа -->
+<dialog class="drawer" id="drawer" aria-labelledby="dTitle">
+  <div class="drawer-inner">
+    <div class="drawer-head">
+      <div>
+        <h2 id="dTitle"></h2>
+        <p class="d-sub" id="dSub"></p>
+      </div>
+      <button type="button" class="icon-btn" data-close aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="drawer-body" id="dBody"></div>
+  </div>
+</dialog>
+
+<!-- Просмотр фото -->
+<dialog class="lightbox" id="lightbox" aria-label="Просмотр файла">
+  <div class="lb-top">
+    <p id="lbName"></p>
+    <div class="lb-actions">
+      <a class="btn btn-ghost btn-sm" id="lbDownload" download><svg aria-hidden="true"><use href="#i-download"/></svg><span>Скачать</span></a>
+      <button type="button" class="icon-btn" data-close aria-label="Закрыть"><svg aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+  </div>
+  <div class="lb-stage" id="lbStage"></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/js/common.js"></script>
+<script src="assets/js/admin.js"></script>
+</body>
+</html>
