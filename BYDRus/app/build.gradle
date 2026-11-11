@@ -1,0 +1,53 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.bydrus.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.bydrus.app'
+        minSdk 24
+        // 28: мягче ограничения на скрытые API (нужны для смены языка системы)
+        targetSdk 28
+        versionCode 1
+        versionName '1.0'
+    }
+
+    // Ключ подписи не хранится в репозитории. Путь и пароль приходят из переменных
+    // окружения (их задаёт сборка на GitHub); без них APK подписывается отладочным ключом.
+    def ksPath = System.getenv('BYDRUS_KEYSTORE')
+    def ksPass = System.getenv('BYDRUS_KS_PASS')
+    def hasKey = ksPath != null && ksPass != null && file(ksPath).exists()
+
+    signingConfigs {
+        if (hasKey) {
+            shared {
+                storeFile file(ksPath)
+                storePassword ksPass
+                keyAlias 'bydrus'
+                keyPassword ksPass
+                enableV1Signing true
+                enableV2Signing true
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig hasKey ? signingConfigs.shared : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}

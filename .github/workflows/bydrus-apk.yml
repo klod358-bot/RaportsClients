@@ -1,0 +1,74 @@
+name: BYDRus APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'BYDRus/**'
+      - '!BYDRus/apk/**'
+      - '.github/workflows/bydrus-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bydrus-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: BYDRus
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.BYDRUS_KEYSTORE_B64 }}
+          KEYSTORE_PASS: ${{ secrets.BYDRUS_KS_PASS }}
+        run: |
+          KS="$RUNNER_TEMP/bydrus.jks"
+          if [ -n "$KEYSTORE_B64" ] && [ -n "$KEYSTORE_PASS" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$KS"
+            PASS="$KEYSTORE_PASS"
+          else
+            echo "Секрет BYDRUS_KEYSTORE_B64 не задан — подписываю временным ключом этой сборки."
+            PASS="$(openssl rand -hex 16)"
+            keytool -genkeypair -keystore "$KS" -storetype PKCS12 -storepass "$PASS" -keypass "$PASS" \
+              -alias bydrus -keyalg RSA -keysize 2048 -validity 10950 -dname "CN=BYD Rus"
+          fi
+          echo "::add-mask::$PASS"
+          echo "BYDRUS_KEYSTORE=$KS" >> "$GITHUB_ENV"
+          echo "BYDRUS_KS_PASS=$PASS" >> "$GITHUB_ENV"
+
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+
+      - name: Copy APK
+        run: |
+          mkdir -p apk
+          cp app/build/outputs/apk/release/app-release.apk apk/BYDRus.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BYDRus-apk
+          path: BYDRus/apk/BYDRus.apk
+
+      - name: Publish APK to the repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apk/BYDRus.apk
+          git commit -m "BYDRus: сборка APK ${GITHUB_SHA::7}" || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

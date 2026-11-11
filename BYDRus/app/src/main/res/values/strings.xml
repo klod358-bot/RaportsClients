@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BYD Русификатор</string>
+    <string name="acc_label">BYD Русификатор — перевод экрана</string>
+    <string name="acc_desc">Читает китайские надписи на экране и показывает поверх них русский перевод. Данные с экрана никуда не передаются.</string>
+</resources>
